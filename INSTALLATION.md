@@ -23,9 +23,25 @@ automatisch als Lizenztext angezeigt und muss akzeptiert werden).
 - **phpMyAdmin** wird für den letzten Einrichtungsschritt gebraucht (falls
   noch nicht vorhanden, kurz vorher aus dem Paket-Zentrum installieren).
 
-### Installieren
-1. `synology-spk/dist/HausVerwaltung.spk` auf den PC herunterladen (liegt
-   bereits fertig gebaut im Projektordner).
+### Installieren – Variante A: Paketquelle (empfohlen, mit Ein-Klick-Updates)
+Einmalig einrichten, danach erscheint „Hausverwaltung" im Paket-Zentrum
+wie ein ganz normales Paket – inklusive automatischer Update-Anzeige:
+
+1. Synology **Paket-Zentrum** öffnen → Zahnrad oben rechts →
+   **Einstellungen** → Reiter **Paketquellen** → **Hinzufügen**
+2. Name: `Hausverwaltung` (frei wählbar)
+   Adresse: `https://hausverwaltung-updatecheck.vercel.app/packages.json`
+3. Im Paket-Zentrum unter „Community" (bzw. der neuen Quelle) erscheint
+   jetzt „Hausverwaltung" – **Installieren** klicken.
+4. Weiter wie unten ab Schritt 3.
+
+Bei einer neuen Version reicht künftig ein Klick auf **Aktualisieren** im
+Paket-Zentrum.
+
+### Installieren – Variante B: Manuell (ohne Paketquelle)
+1. Aktuelle `.spk`-Datei von
+   [github.com/mzimmere/hausverwaltung/releases](https://github.com/mzimmere/hausverwaltung/releases)
+   herunterladen.
 2. Synology **Paket-Zentrum** öffnen → oben rechts **Manuell installieren**
    → die `.spk`-Datei auswählen → durchklicken.
 3. Nach der Installation zeigt das Paket-Zentrum eine **Anleitung für den
@@ -57,13 +73,17 @@ Paketordners). Für eine komplette Entfernung müssten
 `/var/services/web/hausverwaltung` per File Station und die Datenbank
 `hausverwaltung` per phpMyAdmin von Hand gelöscht werden.
 
-### Paket neu bauen (nach Code-Änderungen)
+### Neue Version veröffentlichen (nach Code-Änderungen)
 ```
 cd synology-spk
-bash build_spk.sh
+bash release.sh 44        # 44 = neue Versionsnummer, ohne "v"
 ```
-Baut `dist/HausVerwaltung.spk` aus dem aktuellen Projektordner neu
-zusammen (Details siehe `synology-spk/README.md`).
+Baut die `.spk` neu, committet/taggt/pusht nach GitHub, lädt die `.spk`
+als Release-Asset hoch und aktualisiert die Paketquelle
+(`packages.json`) sowie den Update-Hinweis (`version.json`) auf Vercel –
+alles in einem Schritt. Voraussetzung: `$changelog` in `assets/header.php`
+wurde vorher um den passenden Eintrag ergänzt. Details siehe
+`synology-spk/README.md`.
 
 ---
 
@@ -98,26 +118,22 @@ docker compose down
 
 ---
 
-## Update-Hinweis pflegen (nur für dich als Betreiber relevant)
+## Update-Hinweis & Paketquelle pflegen (nur für dich als Betreiber relevant)
 
 Jede Installation prüft (nur für Admins sichtbar, höchstens 1x täglich,
 scheitert lautlos ohne Internet) eine kleine, öffentlich erreichbare
 JSON-Datei und zeigt „Update vXX verfügbar" neben der Versionsnummer an,
 falls die eigene Version älter ist. Diese Datei liegt auf Vercel:
-`https://hausverwaltung-updatecheck-mzimmere.vercel.app/version.json`,
+`https://hausverwaltung-updatecheck.vercel.app/version.json`,
 hinterlegt in `config/config.php` als `UPDATE_CHECK_URL`.
 
-**Bei jedem neuen Release:** die Datei mit der neuen Versionsnummer neu
-deployen (einfach mich – Claude – bitten, `version.json` mit der neuen
-Version zu redeployen, oder selbst über das Vercel-Dashboard bearbeiten).
+Die Synology-Paketquelle (`packages.json`, siehe „Variante A" oben) liegt
+auf demselben Vercel-Projekt und verweist auf die `.spk`-Datei im
+jeweils aktuellen [GitHub Release](https://github.com/mzimmere/hausverwaltung/releases).
 
-**Einmaliger Schritt, noch offen:** Vercel schützt neue Projekte
-standardmäßig mit „Vercel Authentication" – dadurch ist die Datei aktuell
-noch NICHT öffentlich abrufbar. Bitte einmalig im Vercel-Dashboard unter
-Project Settings → Deployment Protection → „Vercel Authentication"
-deaktivieren, sonst bleibt der Update-Hinweis dauerhaft unsichtbar (die
-App scheitert dabei absichtlich lautlos, es gibt also keine Fehlermeldung,
-die darauf hinweist).
+**Bei jedem neuen Release:** `bash synology-spk/release.sh <Versionsnummer>`
+ausführen (siehe oben) – aktualisiert beide Dateien automatisch und
+deployed sie neu.
 
 ---
 

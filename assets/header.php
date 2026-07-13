@@ -83,6 +83,14 @@ $currentPage = basename($_SERVER['PHP_SELF']);
 // ------------------------------------------------------------
 $changelog = [
     [
+        'version' => 'v44',
+        'datum'   => 'Juli 2026',
+        'punkte'  => [
+            'Synology-Paket ist jetzt auch als Paketquelle verfügbar (Paket-Zentrum → Einstellungen → Paketquellen) – zeigt Updates direkt im Paket-Zentrum an, kein manueller Download mehr nötig',
+            'Projekt liegt jetzt auf GitHub (öffentlich, ohne echte Zugangsdaten/Nutzdaten) – Grundlage für automatisierte Releases',
+        ],
+    ],
+    [
         'version' => 'v43',
         'datum'   => 'Juli 2026',
         'punkte'  => [

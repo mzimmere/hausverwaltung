@@ -9,9 +9,31 @@ Baut `HausVerwaltung.spk` – das Synology-Paket für Paket-Zentrum →
   Wird von `build_spk.sh` zusätzlich um `build/package/app` (Kopie der
   App-Dateien) und `build/package.tgz` ergänzt, beides danach wieder
   gelöscht – im Git-/Dateisystem bleiben nur die Bausteine.
-- `dist/` – fertiges `HausVerwaltung.spk` (Ergebnis von `build_spk.sh`).
+- `dist/` – fertiges `HausVerwaltung.spk` (Ergebnis von `build_spk.sh`),
+  nicht Teil des Repos (siehe `.gitignore`) – wird stattdessen als
+  GitHub-Release-Asset veröffentlicht (siehe unten).
+- `packages.json` – Synology-Paketquelle (Format nach Vorbild echter
+  Community-Repos), verweist auf das jeweils aktuelle GitHub-Release.
+- `update-endpoint/` – kleines statisches Vercel-Projekt, das
+  `packages.json` und `version.json` (Update-Hinweis in der App)
+  öffentlich hostet: https://hausverwaltung-updatecheck.vercel.app
 
-## Neu bauen
+## Neue Version veröffentlichen
+
+```
+bash release.sh 44        # 44 = neue Versionsnummer, ohne "v"
+```
+
+Macht alles in einem Schritt: `.spk` neu bauen → committen/taggen/pushen
+nach [github.com/mzimmere/hausverwaltung](https://github.com/mzimmere/hausverwaltung)
+→ GitHub Release mit `.spk`-Asset anlegen → `packages.json` mit neuer
+Version/Checksums/Link aktualisieren → `update-endpoint/` neu auf Vercel
+deployen. Voraussetzung: `gh` (GitHub CLI, angemeldet) und `vercel` CLI
+(angemeldet, Projekt per `vercel link` schon verknüpft) sind installiert,
+und `$changelog` in `assets/header.php` wurde vorher um den passenden
+Eintrag ergänzt.
+
+## Nur die .spk neu bauen (ohne zu veröffentlichen)
 
 ```
 bash build_spk.sh
