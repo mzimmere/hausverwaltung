@@ -3,7 +3,7 @@
 # Station bedient. Es gibt hier nichts zu starten/stoppen; das Paket
 # gilt als "laeuft", solange die Dateien vorhanden sind.
 
-WEBROOT="/var/services/web/hausverwaltung"
+WEBROOT="/var/services/web_packages/hausverwaltung"
 
 case "$1" in
     start)

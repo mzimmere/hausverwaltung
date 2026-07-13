@@ -17,11 +17,16 @@ automatisch als Lizenztext angezeigt und muss akzeptiert werden).
 ## Option 1: Synology NAS als Paket (.spk)
 
 ### Voraussetzungen
-- **Web Station** und **MariaDB 10** werden beim Installieren automatisch
-  mitinstalliert, falls noch nicht vorhanden (als Paket-Abhängigkeit
-  hinterlegt).
+- **Web Station**, **MariaDB 10** und **PHP 8.2** werden beim Installieren
+  automatisch mitinstalliert, falls noch nicht vorhanden (als
+  Paket-Abhängigkeit hinterlegt).
 - **phpMyAdmin** wird für den letzten Einrichtungsschritt gebraucht (falls
   noch nicht vorhanden, kurz vorher aus dem Paket-Zentrum installieren).
+
+Das Paket läuft komplett **ohne Root-Rechte** (Pflicht seit DSM 7 für
+unsignierte Drittanbieter-Pakete) – die Dateien liegen dadurch nicht mehr
+unter `/var/services/web/`, sondern in einem von Web Station selbst
+verwalteten Ordner unter `/var/services/web_packages/hausverwaltung`.
 
 ### Installieren – Variante A: Paketquelle (empfohlen, mit Ein-Klick-Updates)
 Einmalig einrichten, danach erscheint „Hausverwaltung" im Paket-Zentrum
@@ -49,29 +54,32 @@ Paket-Zentrum.
    eine vorbereitete SQL-Datei muss einmal in phpMyAdmin importiert werden.
    Genauer Ablauf steht in der Meldung, kurz zusammengefasst:
    - phpMyAdmin öffnen → Reiter **Importieren**
-   - Datei auswählen: im File Station unter **web → hausverwaltung →**
-     `EINMALIG_IN_PHPMYADMIN_AUSFUEHREN.sql`
+   - Datei auswählen: im File Station unter **web_packages →
+     hausverwaltung →** `EINMALIG_IN_PHPMYADMIN_AUSFUEHREN.sql`
    - **Los** klicken
-   - Diese Datei danach löschen (sie enthält das neu erzeugte
+   - Diese Datei danach löschen (sie enthält das mitgelieferte
      Datenbank-Passwort)
 4. Fertig: `http://<NAS-IP>/hausverwaltung/` öffnen, Login `admin` /
    `hausverwaltung` (bitte sofort ändern).
 
-### Wichtig, falls schon eine bestehende Installation läuft
-Das Paket erkennt automatisch, ob unter
-`/var/services/web/hausverwaltung` bereits eine Installation mit eigener
-`config/config.php` liegt (z. B. die produktive Instanz). In diesem Fall
-werden **Datenbank-Zugangsdaten, Uploads und Backups nicht verändert** –
-es werden nur die Programmdateien aktualisiert, und der SQL-Einrichtungs-
-schritt entfällt. Trotzdem: **vor dem ersten Test auf echter Hardware ein
-Backup ziehen** (Seite „Backup" in der App), reine Vorsicht.
+### Wichtig, falls schon eine bestehende (manuelle) Installation läuft
+Anders als eine frühere Version dieses Pakets **übernimmt/verändert diese
+Version eure bestehende manuelle Installation unter
+`/var/services/web/hausverwaltung` NICHT** – das Paket legt zwingend eine
+**eigenständige, neue** Installation an (eigener Ordner unter
+`web_packages`, eigene neue Datenbank `hausverwaltung`). Grund: der
+DSM7-konforme, root-freie Weg funktioniert nur über diesen von DSM selbst
+verwalteten Ordner. Wer beide zusammenführen möchte, muss die Daten
+(Datenbank-Inhalt, hochgeladene Dateien) von Hand von der alten in die
+neue Installation übertragen.
 
 ### Deinstallieren
-Löscht bewusst **nichts**: Datenbank, Uploads und Backups bleiben
-erhalten (liegen außerhalb des von DSM automatisch entfernten
-Paketordners). Für eine komplette Entfernung müssten
-`/var/services/web/hausverwaltung` per File Station und die Datenbank
-`hausverwaltung` per phpMyAdmin von Hand gelöscht werden.
+Die Datenbank `hausverwaltung` bleibt in jedem Fall bestehen und muss bei
+Bedarf separat per phpMyAdmin gelöscht werden. Ob der Ordner unter
+`web_packages` beim Deinstallieren automatisch entfernt wird, ist nicht
+sicher bekannt (wird von DSMs Webservice-Worker verwaltet, nicht vom
+Paket selbst) – vor dem Deinstallieren sicherheitshalber ein Backup
+ziehen, falls wichtige Uploads dort liegen.
 
 ### Neue Version veröffentlichen (nach Code-Änderungen)
 ```

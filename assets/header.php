@@ -83,6 +83,14 @@ $currentPage = basename($_SERVER['PHP_SELF']);
 // ------------------------------------------------------------
 $changelog = [
     [
+        'version' => 'v45',
+        'datum'   => 'Juli 2026',
+        'punkte'  => [
+            'Synology-Paket komplett auf DSM7-konforme Root-freie Installation umgebaut (läuft als eingeschränkter Paket-Nutzer statt root) – vorherige Version wurde von DSM 7 wegen Root-Rechten blockiert',
+            'Achtung: dadurch legt das Paket jetzt eine eigenständige, neue Installation an (eigener Ordner unter web_packages, eigene Datenbank) statt eine bestehende manuelle Installation zu übernehmen',
+        ],
+    ],
+    [
         'version' => 'v44',
         'datum'   => 'Juli 2026',
         'punkte'  => [
