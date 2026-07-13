@@ -31,23 +31,7 @@ MD5=$(md5sum "$SPK" | cut -d' ' -f1)
 SHA256=$(sha256sum "$SPK" | cut -d' ' -f1)
 echo "   Größe: $SIZE Bytes, md5: $MD5"
 
-echo "== 3/6: Git commit + Tag + Push =="
-cd ..
-git add -A
-git commit -m "Release ${TAG}" || echo "   (nichts zu committen)"
-git tag -f "$TAG"
-git push origin main
-git push origin "$TAG" --force
-cd synology-spk
-
-echo "== 4/6: GitHub Release + Asset hochladen =="
-"$GH" release delete "$TAG" --repo "$REPO" --yes 2>/dev/null || true
-"$GH" release create "$TAG" "$SPK" \
-    --title "$TAG" \
-    --notes "Siehe Changelog in der Anwendung (Versions-Button oben)." \
-    --repo "$REPO"
-
-echo "== 5/6: packages.json + version.json aktualisieren =="
+echo "== 3/6: packages.json + version.json aktualisieren =="
 LINK="https://github.com/${REPO}/releases/download/${TAG}/HausVerwaltung.spk"
 node -e "
 const fs = require('fs');
@@ -70,6 +54,22 @@ cat > update-endpoint/version.json <<EOF
   "hinweis": "Siehe Changelog in der Anwendung."
 }
 EOF
+
+echo "== 4/6: Git commit + Tag + Push =="
+cd ..
+git add -A
+git commit -m "Release ${TAG}" || echo "   (nichts zu committen)"
+git tag -f "$TAG"
+git push origin main
+git push origin "$TAG" --force
+cd synology-spk
+
+echo "== 5/6: GitHub Release + Asset hochladen =="
+"$GH" release delete "$TAG" --repo "$REPO" --yes 2>/dev/null || true
+"$GH" release create "$TAG" "$SPK" \
+    --title "$TAG" \
+    --notes "Siehe Changelog in der Anwendung (Versions-Button oben)." \
+    --repo "$REPO"
 
 echo "== 6/6: Vercel deployen =="
 ( cd update-endpoint && vercel deploy --prod --yes )
