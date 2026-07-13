@@ -83,6 +83,13 @@ $currentPage = basename($_SERVER['PHP_SELF']);
 // ------------------------------------------------------------
 $changelog = [
     [
+        'version' => 'v47',
+        'datum'   => 'Juli 2026',
+        'punkte'  => [
+            'Synology-Paket: eigene Datenbank/eigener Datenbank-Benutzer ("hausverwaltung_paket") statt "hausverwaltung" – vermeidet, dass der Einrichtungsschritt versehentlich in eine bestehende gleichnamige Produktivdatenbank auf demselben MariaDB-Server schreibt (kritischer Fix, betrifft nur die Synology-Paket-Installation)',
+        ],
+    ],
+    [
         'version' => 'v46',
         'datum'   => 'Juli 2026',
         'punkte'  => [

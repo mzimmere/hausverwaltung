@@ -28,11 +28,22 @@ rm -f "$APP"/config/init.sql
 # "Hausbild als Hintergrund, falls vorhanden"). Spart nebenbei viel Platz.
 rm -f "$APP"/assets/haus.jpg "$APP"/assets/haus.png "$APP"/assets/haus.jpeg "$APP"/assets/haus.webp
 
+# WICHTIG: Eigener Datenbankname + eigener DB-Benutzer fuer diese Paket-
+# Installation, ausdruecklich VERSCHIEDEN von "hausverwaltung" - MariaDB 10
+# ist ein einziger, gemeinsamer Server fuer die ganze NAS. Wuerde hier der
+# gleiche Name wie bei einer bestehenden nativen Installation verwendet,
+# wuerde der SQL-Einrichtungsschritt in DERSELBEN echten Datenbank landen
+# und sie mit Demo-Platzhalterdaten vermischen.
+PKG_DB_NAME="hausverwaltung_paket"
+PKG_DB_USER="hausverwaltung_paket"
+
 # Zufaelliges Passwort EINMALIG beim Bauen erzeugen - fest in config.php UND
 # in der vorbereiteten Setup-SQL verwendet (beide werden 1:1 mitkopiert,
 # es gibt daher kein Timing-Problem mit dem Webservice-Worker, der die
 # Dateien erst nach der Installation an ihren Serverort kopiert).
 DB_PASS=$(head -c 33 /dev/urandom | md5sum | cut -c1-24)
+sed -i "s/getenv('DB_NAME') ?: '[^']*'/getenv('DB_NAME') ?: '${PKG_DB_NAME}'/" "$APP"/config/config.php
+sed -i "s/getenv('DB_USER') ?: '[^']*'/getenv('DB_USER') ?: '${PKG_DB_USER}'/" "$APP"/config/config.php
 sed -i "s/getenv('DB_PASS') ?: '[^']*'/getenv('DB_PASS') ?: '${DB_PASS}'/" "$APP"/config/config.php
 
 {
@@ -41,12 +52,18 @@ sed -i "s/getenv('DB_PASS') ?: '[^']*'/getenv('DB_PASS') ?: '${DB_PASS}'/" "$APP
     echo "-- diese Datei auswaehlen, 'Los'). Danach ist die Anwendung startklar."
     echo "-- Diese Datei danach loeschen."
     echo ""
-    echo "CREATE DATABASE IF NOT EXISTS hausverwaltung CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
-    echo "CREATE USER IF NOT EXISTS 'hausverwaltung'@'localhost' IDENTIFIED BY '${DB_PASS}';"
-    echo "GRANT ALL PRIVILEGES ON hausverwaltung.* TO 'hausverwaltung'@'localhost';"
+    echo "CREATE DATABASE IF NOT EXISTS ${PKG_DB_NAME} CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
+    echo "CREATE USER IF NOT EXISTS '${PKG_DB_USER}'@'localhost' IDENTIFIED BY '${DB_PASS}';"
+    echo "GRANT ALL PRIVILEGES ON ${PKG_DB_NAME}.* TO '${PKG_DB_USER}'@'localhost';"
     echo "FLUSH PRIVILEGES;"
     echo ""
-    cat "$APP"/sql/install_complete.sql
+    # install_complete.sql ist fuer den generischen Namen "hausverwaltung"
+    # geschrieben (u.a. fuer den Docker-Weg, wo das unproblematisch ist) -
+    # fuer dieses Paket hier gezielt (nur exakte "CREATE DATABASE .../USE ..."
+    # Zeilen, nicht Kommentare/Beispieldaten) auf den eigenen Namen umbiegen.
+    sed -e "s/^CREATE DATABASE IF NOT EXISTS hausverwaltung\$/CREATE DATABASE IF NOT EXISTS ${PKG_DB_NAME}/" \
+        -e "s/^USE hausverwaltung;\$/USE ${PKG_DB_NAME};/" \
+        "$APP"/sql/install_complete.sql
 } > "$APP"/EINMALIG_IN_PHPMYADMIN_AUSFUEHREN.sql
 
 # Zugriff per Browser auf *.sql sperren (die Datei enthaelt das Passwort).
