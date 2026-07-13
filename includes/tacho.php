@@ -32,6 +32,13 @@ function kostenTachoHtml(float $kosten, float $vorauszahlung, float $prozent, st
     $dashoffsetZielFmt = number_format($boglaengeGesamt - $boglaenge, 2, '.', '');
     $winkelFmt = number_format($winkel, 1, '.', '');
 
+    // Zwei Vergleichsbalken auf derselben Skala (bezahlt vs. verbraucht),
+    // damit die Verhaeltnis-Prozentzahl vom Tacho zusaetzlich als Laenge
+    // sichtbar wird - nicht nur als abstrakte Zahl.
+    $maxBalkenWert = max($kosten, $vorauszahlung, 0.01);
+    $balkenBezahlt   = (int)round(min(100, $vorauszahlung / $maxBalkenWert * 100));
+    $balkenVerbraucht = (int)round(min(100, $kosten / $maxBalkenWert * 100));
+
     ob_start();
     ?>
     <div class="kosten-tacho">
@@ -46,9 +53,21 @@ function kostenTachoHtml(float $kosten, float $vorauszahlung, float $prozent, st
             <text x="100" y="90" text-anchor="middle" font-size="26" font-weight="700" fill="var(--text)"><?= $keineVorauszahlung ? '–' : $prozentAnzeige . '%' ?></text>
         </svg>
         <div class="kosten-tacho-status" style="color:<?= $farbe ?>"><?= htmlspecialchars($status) ?></div>
-        <div class="kosten-tacho-details">
-            <?= number_format($kosten,2,',','.') ?> € laufende Kosten<br>
-            von <?= number_format($vorauszahlung,2,',','.') ?> € geleisteter Vorauszahlung
+        <div class="kosten-tacho-balken">
+            <div class="kosten-tacho-balken-zeile">
+                <span class="kosten-tacho-balken-label">Bezahlt</span>
+                <span class="kosten-tacho-balken-spur">
+                    <span class="kosten-tacho-balken-fuellung" style="--balken-breite:<?= $balkenBezahlt ?>%;--balken-farbe:var(--primary)"></span>
+                </span>
+                <span class="kosten-tacho-balken-wert"><?= number_format($vorauszahlung,2,',','.') ?> €</span>
+            </div>
+            <div class="kosten-tacho-balken-zeile">
+                <span class="kosten-tacho-balken-label">Verbraucht</span>
+                <span class="kosten-tacho-balken-spur">
+                    <span class="kosten-tacho-balken-fuellung" style="--balken-breite:<?= $balkenVerbraucht ?>%;--balken-farbe:<?= $farbe ?>"></span>
+                </span>
+                <span class="kosten-tacho-balken-wert"><?= number_format($kosten,2,',','.') ?> €</span>
+            </div>
         </div>
     </div>
     <?php

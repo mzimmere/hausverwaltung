@@ -83,6 +83,13 @@ $currentPage = basename($_SERVER['PHP_SELF']);
 // ------------------------------------------------------------
 $changelog = [
     [
+        'version' => 'v54',
+        'datum'   => 'Juli 2026',
+        'punkte'  => [
+            'Kosten-Tacho: zwei Vergleichsbalken ("Bezahlt" / "Verbraucht") ergänzt, damit das Verhältnis von Vorauszahlung zu laufenden Kosten auch als Länge sichtbar ist, nicht nur als Prozentzahl',
+        ],
+    ],
+    [
         'version' => 'v53',
         'datum'   => 'Juli 2026',
         'punkte'  => [

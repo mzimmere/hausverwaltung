@@ -270,7 +270,25 @@ tr:hover td { background: var(--row-hover); }
 .kosten-tacho-titel { font-weight: 600; margin-bottom: .25rem; color: var(--heading); }
 .kosten-tacho svg { display: block; margin: 0 auto; }
 .kosten-tacho-status { font-weight: 700; font-size: .9rem; margin-top: -.25rem; }
-.kosten-tacho-details { font-size: .8rem; color: var(--muted); margin-top: .3rem; line-height: 1.4; }
+
+.kosten-tacho-balken { margin-top: .6rem; text-align: left; }
+.kosten-tacho-balken-zeile { display: flex; align-items: center; gap: .5rem; font-size: .78rem; margin-top: .35rem; }
+.kosten-tacho-balken-label { width: 62px; flex-shrink: 0; color: var(--muted); }
+.kosten-tacho-balken-spur { flex: 1; height: 8px; border-radius: 4px; background: var(--border); overflow: hidden; }
+.kosten-tacho-balken-fuellung {
+    display: block; height: 100%; border-radius: 4px;
+    width: var(--balken-breite, 0%);
+    background: var(--balken-farbe, var(--primary));
+    animation: tachoBalkenWachsen .9s cubic-bezier(.22, .8, .25, 1) .15s both;
+}
+@keyframes tachoBalkenWachsen {
+    from { width: 0%; }
+    to   { width: var(--balken-breite, 0%); }
+}
+.kosten-tacho-balken-wert { flex-shrink: 0; font-weight: 600; color: var(--text); min-width: 72px; text-align: right; }
+@media (prefers-reduced-motion: reduce) {
+    .kosten-tacho-balken-fuellung { animation: none; }
+}
 
 /* Tacho-Animation: Bogen zeichnet sich, Zeiger dreht langsam hoch und leuchtet */
 .kosten-tacho-bogen {
