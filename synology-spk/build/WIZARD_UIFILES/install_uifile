@@ -4,9 +4,9 @@
         "desc": "Diese App benoetigt <b>Web Station</b>, <b>MariaDB 10</b> und <b>PHP 8.2</b> (werden automatisch mitinstalliert, falls noch nicht vorhanden)."
     },
     {
-        "desc": "Nach der Installation ist <b>ein manueller Schritt</b> noetig: eine vorbereitete SQL-Datei muss einmalig in phpMyAdmin importiert werden. Die genaue Anleitung erscheint direkt nach der Installation in diesem Fenster."
+        "desc": "Nach der Installation ist <b>ein manueller Schritt</b> noetig: die Programmdateien liegen in einem eigenen Paketordner und muessen einmalig per File Station in euren Web-Ordner kopiert werden (genaue Anleitung erscheint direkt nach der Installation in diesem Fenster)."
     },
     {
-        "desc": "Diese Installation ist <b>eigenstaendig</b> mit eigener, neuer Datenbank - eine eventuell schon manuell eingerichtete Installation unter <code>/var/services/web/hausverwaltung</code> bleibt davon unberuehrt, wird aber auch nicht automatisch damit zusammengefuehrt."
+        "desc": "Dabei habt ihr die Wahl: entweder eine bestehende manuelle Installation damit aktualisieren (Datenbank/Uploads bleiben unangetastet), oder eine komplett neue, eigenstaendige Installation anlegen."
     }]
 }]

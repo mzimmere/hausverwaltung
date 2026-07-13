@@ -1,9 +1,9 @@
 #!/bin/sh
-# Statische PHP-Anwendung ohne eigenen Dienst - wird komplett von Web
-# Station bedient. Es gibt hier nichts zu starten/stoppen; das Paket
-# gilt als "laeuft", solange die Dateien vorhanden sind.
-
-WEBROOT="/var/services/web_packages/hausverwaltung"
+# Statische PHP-Anwendung ohne eigenen Dienst. Die Dateien liegen im
+# eigenen Paket-Sandbox-Ordner (SYNOPKG_PKGDEST/app) - ob sie tatsaechlich
+# irgendwo von Web Station bedient werden, haengt vom manuellen
+# Kopierschritt aus postinst ab und laesst sich von hier aus nicht
+# pruefen. Es gibt nichts zu starten/stoppen.
 
 case "$1" in
     start)
@@ -13,7 +13,7 @@ case "$1" in
         exit 0
         ;;
     status)
-        if [ -f "$WEBROOT/index.php" ]; then
+        if [ -f "${SYNOPKG_PKGDEST}/app/index.php" ]; then
             exit 0
         else
             exit 1

@@ -83,6 +83,13 @@ $currentPage = basename($_SERVER['PHP_SELF']);
 // ------------------------------------------------------------
 $changelog = [
     [
+        'version' => 'v48',
+        'datum'   => 'Juli 2026',
+        'punkte'  => [
+            'Synology-Paket: "conf/resource" (automatische Web-Station-Registrierung) entfernt, da sich das Format als nicht funktionierend herausgestellt hat ("Ungültiges Dateiformat") – stattdessen liegen die Dateien nach der Installation in einem eigenen Paketordner bereit und werden per einmaligem manuellen Kopieren (File Station) in den Web-Ordner übernommen; funktioniert damit auch zum Aktualisieren einer bestehenden manuellen Installation',
+        ],
+    ],
+    [
         'version' => 'v47',
         'datum'   => 'Juli 2026',
         'punkte'  => [

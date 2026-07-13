@@ -24,9 +24,9 @@ automatisch als Lizenztext angezeigt und muss akzeptiert werden).
   noch nicht vorhanden, kurz vorher aus dem Paket-Zentrum installieren).
 
 Das Paket läuft komplett **ohne Root-Rechte** (Pflicht seit DSM 7 für
-unsignierte Drittanbieter-Pakete) – die Dateien liegen dadurch nicht mehr
-unter `/var/services/web/`, sondern in einem von Web Station selbst
-verwalteten Ordner unter `/var/services/web_packages/hausverwaltung`.
+unsignierte Drittanbieter-Pakete). Dadurch kann es die Dateien nicht mehr
+automatisch in einen Web-Ordner kopieren – das erledigt ihr einmalig
+selbst per File Station (siehe Schritt 3 unten).
 
 ### Installieren – Variante A: Paketquelle (empfohlen, mit Ein-Klick-Updates)
 Einmalig einrichten, danach erscheint „Hausverwaltung" im Paket-Zentrum
@@ -49,37 +49,45 @@ Paket-Zentrum.
    herunterladen.
 2. Synology **Paket-Zentrum** öffnen → oben rechts **Manuell installieren**
    → die `.spk`-Datei auswählen → durchklicken.
-3. Nach der Installation zeigt das Paket-Zentrum eine **Anleitung für den
-   letzten Schritt** an (auch später einsehbar über die Paket-Details):
-   eine vorbereitete SQL-Datei muss einmal in phpMyAdmin importiert werden.
-   Genauer Ablauf steht in der Meldung, kurz zusammengefasst:
-   - phpMyAdmin öffnen → Reiter **Importieren**
-   - Datei auswählen: im File Station unter **web_packages →
-     hausverwaltung →** `EINMALIG_IN_PHPMYADMIN_AUSFUEHREN.sql`
-   - **Los** klicken
-   - Diese Datei danach löschen (sie enthält das mitgelieferte
-     Datenbank-Passwort)
-4. Fertig: `http://<NAS-IP>/hausverwaltung/` öffnen, Login `admin` /
-   `hausverwaltung` (bitte sofort ändern).
+3. Nach der Installation zeigt das Paket-Zentrum eine **Anleitung** an
+   (auch später über die Paket-Details einsehbar) – der eine manuelle
+   Schritt, der jetzt noch fehlt:
+   - **File Station** öffnen → falls `appstore` nicht sichtbar ist:
+     Ansicht → Optionen → „Versteckte Dateien anzeigen" aktivieren
+   - Ordner **appstore → HausVerwaltung → target → app** öffnen – dort
+     liegen die frisch installierten Programmdateien
+   - Alles daraus in euren Web-Ordner kopieren (siehe die zwei
+     Möglichkeiten unten)
 
-### Wichtig, falls schon eine bestehende (manuelle) Installation läuft
-Anders als eine frühere Version dieses Pakets **übernimmt/verändert diese
-Version eure bestehende manuelle Installation unter
-`/var/services/web/hausverwaltung` NICHT** – das Paket legt zwingend eine
-**eigenständige, neue** Installation an (eigener Ordner unter
-`web_packages`, eigene neue Datenbank `hausverwaltung`). Grund: der
-DSM7-konforme, root-freie Weg funktioniert nur über diesen von DSM selbst
-verwalteten Ordner. Wer beide zusammenführen möchte, muss die Daten
-(Datenbank-Inhalt, hochgeladene Dateien) von Hand von der alten in die
-neue Installation übertragen.
+### Zwei Möglichkeiten beim Kopieren
+
+**A) Bestehende manuelle Installation aktualisieren (empfohlen für euch):**
+Alles **außer** `config/config.php`, `uploads/` und `backups/` in den
+bestehenden Ordner `web/hausverwaltung` kopieren und überschreiben.
+Kein SQL-Schritt nötig – eure Datenbank und Zugangsdaten bleiben
+unverändert. Damit bekommt die bestehende Installation die neuen
+Programmdateien, ohne dass irgendwelche Daten angefasst werden.
+
+**B) Neue, eigenständige Installation:**
+Alles in einen neuen Ordner unter `web/` kopieren (z. B.
+`web/hausverwaltung_neu`), danach einmalig `EINMALIG_IN_PHPMYADMIN_AUSFUEHREN.sql`
+aus diesem Ordner in phpMyAdmin importieren (Reiter „Importieren", Datei
+auswählen, „Los"), die Datei danach löschen. Login danach: `admin` /
+`hausverwaltung` (bitte sofort ändern). Diese Variante legt eine eigene,
+neue Datenbank an (`hausverwaltung_paket`) und lässt eure bestehende
+Installation komplett unangetastet.
 
 ### Deinstallieren
-Die Datenbank `hausverwaltung` bleibt in jedem Fall bestehen und muss bei
-Bedarf separat per phpMyAdmin gelöscht werden. Ob der Ordner unter
-`web_packages` beim Deinstallieren automatisch entfernt wird, ist nicht
-sicher bekannt (wird von DSMs Webservice-Worker verwaltet, nicht vom
-Paket selbst) – vor dem Deinstallieren sicherheitshalber ein Backup
-ziehen, falls wichtige Uploads dort liegen.
+Löscht bewusst **nichts** außerhalb des eigenen Paketordners – eure
+Web-Ordner-Kopie (egal ob Variante A oder B) und alle Datenbanken bleiben
+vollständig erhalten, da das Paket sie nie selbst angelegt/verändert hat
+(nur ihr, beim manuellen Kopieren).
+
+### Bei jedem Update
+Genau derselbe manuelle Kopierschritt: Paket-Zentrum zeigt „Update
+verfügbar" → aktualisieren → danach wieder den Inhalt aus
+`appstore → HausVerwaltung → target → app` in euren Web-Ordner kopieren
+(außer `config/config.php`, `uploads/`, `backups/`).
 
 ### Neue Version veröffentlichen (nach Code-Änderungen)
 ```
