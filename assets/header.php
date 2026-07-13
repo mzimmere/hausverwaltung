@@ -83,6 +83,13 @@ $currentPage = basename($_SERVER['PHP_SELF']);
 // ------------------------------------------------------------
 $changelog = [
     [
+        'version' => 'v46',
+        'datum'   => 'Juli 2026',
+        'punkte'  => [
+            'Backup: kann jetzt optional auch alle hochgeladenen Dateien (Verträge, Rechnungen, Übergabeprotokolle) und das Hausfoto mitsichern (als .zip statt .sql) – nützlich z.B. beim Umzug auf eine neue Installation',
+        ],
+    ],
+    [
         'version' => 'v45',
         'datum'   => 'Juli 2026',
         'punkte'  => [

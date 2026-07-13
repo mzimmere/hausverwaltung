@@ -23,8 +23,11 @@ $basePath  = '../';
 /**
  * Erstellt einen vollständigen SQL-Dump aller Tabellen rein über PDO.
  * Schreibt Struktur (CREATE TABLE) und Daten (INSERT) für jede Tabelle.
+ *
+ * $mitDateien = true: statt einer .sql wird eine .zip geschrieben, die
+ * zusätzlich den kompletten uploads/-Ordner und das Hausfoto enthält.
  */
-function erstelleBackup(PDO $db, string $zielDatei): array
+function erstelleBackup(PDO $db, string $zielDatei, bool $mitDateien = false): array
 {
     $tabellen = $db->query("SHOW TABLES")->fetchAll(PDO::FETCH_COLUMN);
     $sql = "-- Hausverwaltung Backup\n-- Erstellt: " . date('Y-m-d H:i:s') . "\n";
@@ -57,18 +60,48 @@ function erstelleBackup(PDO $db, string $zielDatei): array
 
     $sql .= "SET FOREIGN_KEY_CHECKS=1;\n";
 
-    $erfolg = file_put_contents($zielDatei, $sql);
+    if (!$mitDateien) {
+        $erfolg = file_put_contents($zielDatei, $sql);
+        return [
+            'erfolg' => $erfolg !== false,
+            'tabellen' => count($tabellen),
+            'groesse' => $erfolg !== false ? filesize($zielDatei) : 0,
+        ];
+    }
+
+    $zip = new ZipArchive();
+    if ($zip->open($zielDatei, ZipArchive::CREATE | ZipArchive::OVERWRITE) !== true) {
+        return ['erfolg' => false, 'tabellen' => count($tabellen), 'groesse' => 0];
+    }
+    $zip->addFromString('backup.sql', $sql);
+
+    if (is_dir(UPLOAD_DIR)) {
+        $eintraege = new RecursiveIteratorIterator(
+            new RecursiveDirectoryIterator(UPLOAD_DIR, FilesystemIterator::SKIP_DOTS)
+        );
+        foreach ($eintraege as $datei) {
+            $relativ = 'uploads/' . substr($datei->getPathname(), strlen(UPLOAD_DIR));
+            $zip->addFile($datei->getPathname(), str_replace('\\', '/', $relativ));
+        }
+    }
+    foreach (['jpg', 'jpeg', 'png', 'webp'] as $ext) {
+        $bild = __DIR__ . '/../assets/haus.' . $ext;
+        if (is_file($bild)) {
+            $zip->addFile($bild, 'assets/haus.' . $ext);
+            break;
+        }
+    }
+    $zip->close();
+
     return [
-        'erfolg' => $erfolg !== false,
+        'erfolg' => is_file($zielDatei),
         'tabellen' => count($tabellen),
-        'groesse' => $erfolg !== false ? filesize($zielDatei) : 0,
+        'groesse' => is_file($zielDatei) ? filesize($zielDatei) : 0,
     ];
 }
 
 /**
- * Spielt eine zuvor mit erstelleBackup() erzeugte SQL-Datei wieder ein.
- * Zerlegt die Datei in einzelne Statements (getrennt durch ";\n") und
- * führt sie nacheinander aus.
+ * Führt einen SQL-Dump (als String) aus, Statement für Statement.
  *
  * WICHTIG: CREATE/DROP TABLE lösen in MariaDB einen impliziten Commit aus
  * und können NICHT zurückgerollt werden. Die Transaktion schützt daher nur
@@ -77,13 +110,8 @@ function erstelleBackup(PDO $db, string $zielDatei): array
  * Sicherheits-Backup angelegt, das im Fehlerfall manuell zurückgespielt
  * werden kann.
  */
-function spieleBackupEin(PDO $db, string $quellDatei): array
+function spieleSqlStringEin(PDO $db, string $inhalt): array
 {
-    $inhalt = file_get_contents($quellDatei);
-    if ($inhalt === false) {
-        return ['erfolg' => false, 'fehler' => 'Datei konnte nicht gelesen werden.'];
-    }
-
     // Statements anhand von ";\n" trennen – funktioniert zuverlässig mit den
     // eigenen Backups dieser App, da Werte über PDO::quote() escaped wurden.
     $statements = preg_split('/;\s*\n/', $inhalt);
@@ -100,6 +128,88 @@ function spieleBackupEin(PDO $db, string $quellDatei): array
     } catch (Exception $e) {
         return ['erfolg' => false, 'fehler' => $e->getMessage(), 'statements' => $ausgefuehrt];
     }
+}
+
+/** Räumt ein temporäres Verzeichnis samt Inhalt rekursiv weg. */
+function loescheVerzeichnisRekursiv(string $pfad): void
+{
+    if (!is_dir($pfad)) return;
+    $eintraege = new RecursiveIteratorIterator(
+        new RecursiveDirectoryIterator($pfad, FilesystemIterator::SKIP_DOTS),
+        RecursiveIteratorIterator::CHILD_FIRST
+    );
+    foreach ($eintraege as $eintrag) {
+        $eintrag->isDir() ? rmdir($eintrag->getPathname()) : unlink($eintrag->getPathname());
+    }
+    rmdir($pfad);
+}
+
+/** Kopiert ein Verzeichnis rekursiv (überschreibt vorhandene Dateien). */
+function kopiereVerzeichnisRekursiv(string $von, string $nach): void
+{
+    if (!is_dir($nach)) mkdir($nach, 0777, true);
+    $eintraege = new RecursiveIteratorIterator(
+        new RecursiveDirectoryIterator($von, FilesystemIterator::SKIP_DOTS),
+        RecursiveIteratorIterator::SELF_FIRST
+    );
+    foreach ($eintraege as $eintrag) {
+        $ziel = $nach . '/' . substr($eintrag->getPathname(), strlen($von) + 1);
+        if ($eintrag->isDir()) {
+            if (!is_dir($ziel)) mkdir($ziel, 0777, true);
+        } else {
+            copy($eintrag->getPathname(), $ziel);
+        }
+    }
+}
+
+/**
+ * Spielt ein zuvor mit erstelleBackup() erzeugtes Backup wieder ein -
+ * erkennt anhand der Dateiendung, ob es sich um eine reine .sql oder ein
+ * .zip (inkl. Dateien) handelt.
+ */
+function spieleBackupEin(PDO $db, string $quellDatei): array
+{
+    if (str_ends_with(strtolower($quellDatei), '.zip')) {
+        $zip = new ZipArchive();
+        if ($zip->open($quellDatei) !== true) {
+            return ['erfolg' => false, 'fehler' => 'ZIP-Datei konnte nicht geöffnet werden.'];
+        }
+        $sqlInhalt = $zip->getFromName('backup.sql');
+        if ($sqlInhalt === false) {
+            $zip->close();
+            return ['erfolg' => false, 'fehler' => 'In dieser ZIP-Datei wurde keine backup.sql gefunden.'];
+        }
+
+        $ergebnis = spieleSqlStringEin($db, $sqlInhalt);
+        if (!$ergebnis['erfolg']) {
+            $zip->close();
+            return $ergebnis;
+        }
+
+        $tempDir = sys_get_temp_dir() . '/hv_restore_' . uniqid();
+        mkdir($tempDir, 0777, true);
+        $zip->extractTo($tempDir);
+        $zip->close();
+
+        if (is_dir($tempDir . '/uploads')) {
+            kopiereVerzeichnisRekursiv($tempDir . '/uploads', rtrim(UPLOAD_DIR, '/'));
+        }
+        foreach (['jpg', 'jpeg', 'png', 'webp'] as $ext) {
+            $quelle = $tempDir . '/assets/haus.' . $ext;
+            if (is_file($quelle)) {
+                copy($quelle, __DIR__ . '/../assets/haus.' . $ext);
+            }
+        }
+        loescheVerzeichnisRekursiv($tempDir);
+
+        return $ergebnis;
+    }
+
+    $inhalt = file_get_contents($quellDatei);
+    if ($inhalt === false) {
+        return ['erfolg' => false, 'fehler' => 'Datei konnte nicht gelesen werden.'];
+    }
+    return spieleSqlStringEin($db, $inhalt);
 }
 
 // ── Externe Backup-Datei hochladen (z.B. von einem anderen Gerät) ──
@@ -119,15 +229,18 @@ if (isset($_POST['upload_backup']) && !empty($_FILES['backup_datei']['name'])) {
 if (isset($_POST['backup'])) {
     csrfPruefen();
     if (!is_dir(BACKUP_DIR)) mkdir(BACKUP_DIR, 0777, true);
-    $datei = BACKUP_DIR . date('Y-m-d_His') . '_hausverwaltung.sql';
+    $mitDateien = !empty($_POST['mit_dateien']);
+    $endung = $mitDateien ? '.zip' : '.sql';
+    $datei = BACKUP_DIR . date('Y-m-d_His') . '_hausverwaltung' . $endung;
 
     try {
-        $result = erstelleBackup($db, $datei);
+        $result = erstelleBackup($db, $datei, $mitDateien);
         if ($result['erfolg']) {
             protokolliere('backup', 'anlegen', null, 'Backup erstellt: ' . basename($datei));
             $successMsg = 'Backup erstellt: ' . basename($datei)
                 . ' (' . $result['tabellen'] . ' Tabellen, '
-                . number_format($result['groesse']/1024, 1, ',', '.') . ' KB)';
+                . number_format($result['groesse']/1024, 1, ',', '.') . ' KB'
+                . ($mitDateien ? ', inkl. Dateien' : '') . ')';
         } else {
             $errorMsg = 'Backup fehlgeschlagen: Datei konnte nicht geschrieben werden. '
                 . 'Prüfen Sie die Schreibrechte des Verzeichnisses backups/.';
@@ -149,8 +262,9 @@ if (isset($_POST['restore'])) {
         $errorMsg = 'Backup-Datei nicht gefunden.';
     } else {
         // Sicherheitsnetz: vor dem Restore automatisch ein Backup des aktuellen Stands anlegen
-        $sicherungVorRestore = BACKUP_DIR . date('Y-m-d_His') . '_vor_wiederherstellung.sql';
-        erstelleBackup($db, $sicherungVorRestore);
+        // (inkl. Dateien, damit bei einem ZIP-Restore auch die Uploads zurückgeholt werden können)
+        $sicherungVorRestore = BACKUP_DIR . date('Y-m-d_His') . '_vor_wiederherstellung.zip';
+        erstelleBackup($db, $sicherungVorRestore, true);
 
         $result = spieleBackupEin($db, $datei);
         if ($result['erfolg']) {
@@ -189,8 +303,13 @@ if (isset($_GET['delete'])) {
 // Backups auflisten
 $backups = [];
 if (is_dir(BACKUP_DIR)) {
-    foreach (glob(BACKUP_DIR . '*.sql') as $f) {
-        $backups[] = ['name' => basename($f), 'size' => filesize($f), 'datum' => filemtime($f)];
+    foreach (array_merge(glob(BACKUP_DIR . '*.sql'), glob(BACKUP_DIR . '*.zip')) as $f) {
+        $backups[] = [
+            'name' => basename($f),
+            'size' => filesize($f),
+            'datum' => filemtime($f),
+            'mitDateien' => str_ends_with(strtolower($f), '.zip'),
+        ];
     }
     usort($backups, fn($a,$b) => $b['datum'] - $a['datum']);
 }
@@ -208,6 +327,11 @@ include '../assets/header.php';
     </p>
     <form method="post">
         <?= csrfFeld() ?>
+        <label style="display:flex;align-items:center;gap:.5rem;font-weight:400;margin-bottom:1rem;cursor:pointer">
+            <input type="checkbox" name="mit_dateien" value="1">
+            Auch hochgeladene Dateien (Verträge, Rechnungen, Übergabeprotokolle) und das Hausfoto ins Backup aufnehmen
+            <span style="color:var(--muted);font-weight:400">(erzeugt eine .zip statt .sql, kann je nach Datenmenge etwas dauern)</span>
+        </label>
         <button type="submit" name="backup" class="btn btn-success">💾 Backup jetzt erstellen</button>
     </form>
 </div>
@@ -215,11 +339,12 @@ include '../assets/header.php';
 <div class="card">
     <h2>Backup-Datei hochladen</h2>
     <p style="color:var(--muted);margin-bottom:1rem">
-        Falls Sie ein Backup von einem anderen Gerät wiederherstellen möchten, laden Sie die <code>.sql</code>-Datei hier hoch.
+        Falls Sie ein Backup von einem anderen Gerät wiederherstellen möchten, laden Sie die <code>.sql</code>-
+        oder <code>.zip</code>-Datei hier hoch.
     </p>
     <form method="post" enctype="multipart/form-data" style="display:flex;gap:.75rem;align-items:end;flex-wrap:wrap">
         <?= csrfFeld() ?>
-        <input type="file" name="backup_datei" accept=".sql" required>
+        <input type="file" name="backup_datei" accept=".sql,.zip" required>
         <button type="submit" name="upload_backup" class="btn btn-primary">Hochladen</button>
     </form>
 </div>
@@ -232,7 +357,10 @@ include '../assets/header.php';
         <tbody>
         <?php foreach ($backups as $b): ?>
         <tr>
-            <td><?= htmlspecialchars($b['name']) ?></td>
+            <td>
+                <?= htmlspecialchars($b['name']) ?>
+                <?php if ($b['mitDateien']): ?><br><span class="badge badge-info" style="margin-top:.2rem">inkl. Dateien</span><?php endif; ?>
+            </td>
             <td class="text-right"><?= number_format($b['size']/1024,1,',','.') ?> KB</td>
             <td><?= date('d.m.Y H:i', $b['datum']) ?></td>
             <td>
@@ -254,12 +382,16 @@ include '../assets/header.php';
 <div class="card">
     <h2>Hinweise zur Wiederherstellung</h2>
     <ul style="color:var(--muted);font-size:.9rem;line-height:1.7;padding-left:1.2rem">
-        <li>Eine Wiederherstellung <strong>überschreibt alle aktuellen Daten</strong> in der Datenbank.</li>
-        <li>Vor jeder Wiederherstellung wird automatisch ein Sicherheits-Backup des aktuellen Stands angelegt.</li>
+        <li>Eine Wiederherstellung <strong>überschreibt alle aktuellen Daten</strong> in der Datenbank
+            (bei einem Backup „inkl. Dateien" zusätzlich auch die hochgeladenen Dateien und das Hausfoto).</li>
+        <li>Vor jeder Wiederherstellung wird automatisch ein Sicherheits-Backup des aktuellen Stands
+            angelegt (inkl. Dateien, unabhängig davon, ob das wiederherzustellende Backup selbst Dateien enthält).</li>
         <li>Bei einem Fehler mitten in der Wiederherstellung kann die Datenbank in einem unvollständigen
             Zwischenzustand verbleiben. Spielen Sie in diesem Fall das automatisch erstellte Sicherheits-Backup
             erneut über diese Seite ein, um den vorherigen Stand wiederherzustellen.</li>
-        <li>Alternativ kann jedes Backup auch klassisch über phpMyAdmin → „Importieren" eingespielt werden.</li>
+        <li>Eine reine <code>.sql</code>-Datei kann alternativ auch klassisch über phpMyAdmin →
+            „Importieren" eingespielt werden. Eine <code>.zip</code>-Datei („inkl. Dateien") funktioniert
+            nur über diese Seite hier, da phpMyAdmin keine Dateien auspacken kann.</li>
     </ul>
 </div>
 
