@@ -14,11 +14,11 @@
             "qinst": false,
             "qupgrade": false,
             "thumbnail": [
-                "https://hausverwaltung-updatecheck-mzimmere.vercel.app/PACKAGE_ICON_256.PNG"
+                "https://hausverwaltung-updatecheck.vercel.app/PACKAGE_ICON_256.PNG"
             ],
             "link": "https://github.com/mzimmere/hausverwaltung/releases/download/v43/HausVerwaltung.spk",
-            "md5": "5ce70ca5540ad1c87c03b384a38cad20",
-            "sha256": "ebda2f020c89c4fc1bb605bc58d1e2cc33e5857a491bf353567f035a48cf2503",
+            "md5": "a0dddaaf296365412e0d8d24574ee199",
+            "sha256": "950325b9f7650b49150128fcbab95d3795c928140fa2c9b37e6fca117df1f598",
             "size": 143360
         }
     ]
