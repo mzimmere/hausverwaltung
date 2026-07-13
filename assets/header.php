@@ -83,6 +83,13 @@ $currentPage = basename($_SERVER['PHP_SELF']);
 // ------------------------------------------------------------
 $changelog = [
     [
+        'version' => 'v55',
+        'datum'   => 'Juli 2026',
+        'punkte'  => [
+            'Kosten-Tacho: fester grün/gelb/roter Zonenhintergrund statt nur eingefärbtem Fortschrittsbogen – die Zone ist jetzt auch ohne Nadel/Zahl auf einen Blick erkennbar',
+        ],
+    ],
+    [
         'version' => 'v54',
         'datum'   => 'Juli 2026',
         'punkte'  => [

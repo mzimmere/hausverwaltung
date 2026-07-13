@@ -290,14 +290,12 @@ tr:hover td { background: var(--row-hover); }
     .kosten-tacho-balken-fuellung { animation: none; }
 }
 
-/* Tacho-Animation: Bogen zeichnet sich, Zeiger dreht langsam hoch und leuchtet */
-.kosten-tacho-bogen {
-    stroke-dasharray: var(--tacho-boglaenge-gesamt);
-    stroke-dashoffset: var(--tacho-boglaenge-gesamt);
-    animation: tachoBogenWachsen 1.4s cubic-bezier(.22, .8, .25, 1) .15s both;
+/* Tacho-Animation: Zonen blenden ein, Zeiger dreht langsam hoch und leuchtet */
+.kosten-tacho-zone {
+    animation: tachoZoneEinblenden .7s ease-out both;
 }
-@keyframes tachoBogenWachsen {
-    to { stroke-dashoffset: var(--tacho-dashoffset-ziel); }
+@keyframes tachoZoneEinblenden {
+    from { opacity: 0; }
 }
 .kosten-tacho-nadel {
     transform-origin: 100px 100px;
@@ -318,8 +316,7 @@ tr:hover td { background: var(--row-hover); }
     }
 }
 @media (prefers-reduced-motion: reduce) {
-    .kosten-tacho-bogen, .kosten-tacho-nadel { animation: none; }
-    .kosten-tacho-bogen  { stroke-dashoffset: var(--tacho-dashoffset-ziel); }
+    .kosten-tacho-zone, .kosten-tacho-nadel { animation: none; }
     .kosten-tacho-nadel  { transform: rotate(var(--tacho-winkel)); filter: drop-shadow(0 0 2px var(--tacho-glow)); }
 }
 .nav-user-logout:hover { background: rgba(200,50,50,.3); color: #fff; }

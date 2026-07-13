@@ -8,16 +8,21 @@
 function kostenTachoHtml(float $kosten, float $vorauszahlung, float $prozent, string $titel = ''): string {
     $keineVorauszahlung = $vorauszahlung <= 0;
     $prozentAnzeige = round($prozent);
-    $prozentCapped  = max(0, min(100, $keineVorauszahlung ? 0 : $prozent));
-    $winkel = -90 + ($prozentCapped / 100) * 180;
+
+    // Skala geht bis 130%, nicht nur 100% - sonst haette die rote Zone (>105%)
+    // keinen Platz auf dem Bogen und die Nadel wuerde bei alle Werten ueber
+    // 105% immer an derselben Stelle (100%) haengenbleiben.
+    $visMax   = 130;
+    $gruenBis = 85;
+    $gelbBis  = 105;
 
     if ($keineVorauszahlung) {
         $farbe = 'var(--muted)';
         $status = $kosten > 0 ? 'keine Vorauszahlung hinterlegt' : 'noch keine Daten';
-    } elseif ($prozent < 85) {
+    } elseif ($prozent < $gruenBis) {
         $farbe = 'var(--success)';
         $status = 'im Rahmen';
-    } elseif ($prozent <= 105) {
+    } elseif ($prozent <= $gelbBis) {
         $farbe = '#e8a020';
         $status = 'grenzwertig';
     } else {
@@ -25,12 +30,28 @@ function kostenTachoHtml(float $kosten, float $vorauszahlung, float $prozent, st
         $status = 'über Vorauszahlung';
     }
 
-    $radius = 90;
-    $boglaengeGesamt = M_PI * $radius;
-    $boglaenge = $boglaengeGesamt * ($prozentCapped / 100);
-    $boglaengeGesamtFmt = number_format($boglaengeGesamt, 2, '.', '');
-    $dashoffsetZielFmt = number_format($boglaengeGesamt - $boglaenge, 2, '.', '');
+    $nadelProzent = $keineVorauszahlung ? 0 : max(0, min($visMax, $prozent));
+    $winkel = -90 + ($nadelProzent / $visMax) * 180;
     $winkelFmt = number_format($winkel, 1, '.', '');
+
+    // Feste Zonenfaerbung im Hintergrund-Bogen (grün/gelb/rot), damit die
+    // Zone auch ohne Nadel/Zahl auf einen Blick erkennbar ist.
+    $radius = 90;
+    $cx = 100;
+    $cy = 100;
+    $zonenPunkt = static function (float $pct) use ($visMax, $radius, $cx, $cy): array {
+        $frac = max(0, min(1, $pct / $visMax));
+        $rad  = deg2rad(-180 + $frac * 180);
+        return [$cx + $radius * cos($rad), $cy + $radius * sin($rad)];
+    };
+    $zonenBogen = static function (float $von, float $bis) use ($zonenPunkt, $radius): string {
+        [$x1, $y1] = $zonenPunkt($von);
+        [$x2, $y2] = $zonenPunkt($bis);
+        return sprintf('M %.2F %.2F A %d %d 0 0 1 %.2F %.2F', $x1, $y1, $radius, $radius, $x2, $y2);
+    };
+    $bogenGruen = $zonenBogen(0, $gruenBis);
+    $bogenGelb  = $zonenBogen($gruenBis, $gelbBis);
+    $bogenRot   = $zonenBogen($gelbBis, $visMax);
 
     // Zwei Vergleichsbalken auf derselben Skala (bezahlt vs. verbraucht),
     // damit die Verhaeltnis-Prozentzahl vom Tacho zusaetzlich als Laenge
@@ -44,9 +65,9 @@ function kostenTachoHtml(float $kosten, float $vorauszahlung, float $prozent, st
     <div class="kosten-tacho">
         <?php if ($titel): ?><div class="kosten-tacho-titel"><?= htmlspecialchars($titel) ?></div><?php endif; ?>
         <svg viewBox="0 0 200 115" width="200" height="115" style="max-width:100%">
-            <path d="M 10 100 A 90 90 0 0 1 190 100" fill="none" stroke="var(--border,#e2e8f0)" stroke-width="16" stroke-linecap="round"/>
-            <path class="kosten-tacho-bogen" d="M 10 100 A 90 90 0 0 1 190 100" fill="none" stroke="<?= $farbe ?>" stroke-width="16" stroke-linecap="round"
-                  style="--tacho-boglaenge-gesamt:<?= $boglaengeGesamtFmt ?>;--tacho-dashoffset-ziel:<?= $dashoffsetZielFmt ?>"/>
+            <path class="kosten-tacho-zone" d="<?= $bogenGruen ?>" fill="none" stroke="var(--success)" stroke-width="16" stroke-linecap="round" opacity="0.35"/>
+            <path class="kosten-tacho-zone" d="<?= $bogenGelb ?>" fill="none" stroke="#e8a020" stroke-width="16" stroke-linecap="round" opacity="0.35" style="animation-delay:.1s"/>
+            <path class="kosten-tacho-zone" d="<?= $bogenRot ?>" fill="none" stroke="var(--danger)" stroke-width="16" stroke-linecap="round" opacity="0.35" style="animation-delay:.2s"/>
             <line class="kosten-tacho-nadel" x1="100" y1="100" x2="100" y2="28" stroke="<?= $farbe ?>" stroke-width="4" stroke-linecap="round"
                   style="--tacho-winkel:<?= $winkelFmt ?>deg;--tacho-glow:<?= $farbe ?>"/>
             <circle cx="100" cy="100" r="7" fill="#334155"/>
