@@ -22,7 +22,7 @@ define('APP_URL', '');  // z.B. http://192.168.1.100:8080
 
 // Update-Hinweis (optional): öffentlich erreichbare JSON-Datei mit der
 // jeweils neuesten Versionsnummer. Leer lassen, um die Prüfung abzuschalten.
-define('UPDATE_CHECK_URL', 'https://hausverwaltung-updatecheck-mzimmere.vercel.app/version.json');
+define('UPDATE_CHECK_URL', 'https://hausverwaltung-updatecheck.vercel.app/version.json');
 
 // Upload-Verzeichnis
 define('UPLOAD_DIR', __DIR__ . '/../uploads/');
