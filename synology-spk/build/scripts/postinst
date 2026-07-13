@@ -1,33 +1,28 @@
 #!/bin/sh
 # Kein Root noetig: die App-Dateien liegen einfach im eigenen
-# Paket-Sandbox-Ordner (SYNOPKG_PKGDEST/app). Web Station kann diesen
-# Ordner nicht automatisch registrieren (das haette "conf/resource"
-# gebraucht, was sich bei diesem Paket als nicht funktionierend
-# herausgestellt hat) - stattdessen zeigt postinst hier den Pfad an,
-# den man einmalig per File Station in den eigentlichen Web-Ordner
-# kopieren muss.
+# Paket-Sandbox-Ordner (SYNOPKG_PKGDEST/app). Dieser Ordner ist NICHT
+# ueber File Station erreichbar (auch nicht ueber "appstore" - das war
+# ein frueherer Irrtum) - der Zugriff muss ueber SSH erfolgen. Getestet
+# und bestaetigt funktionierend.
 
 {
-    echo "Hausverwaltung wurde installiert - ein manueller Schritt fehlt noch:"
+    echo "Hausverwaltung wurde installiert - ein manueller Schritt fehlt noch"
+    echo "(per SSH, siehe Systemsteuerung -> Terminal & SNMP):"
     echo ""
-    echo "Die Programmdateien liegen bereit unter:"
-    echo "  ${SYNOPKG_PKGDEST}/app"
-    echo "(in File Station sichtbar unter 'appstore' -> 'HausVerwaltung' ->"
-    echo "'target' -> 'app', falls noetig zuerst unter Ansicht -> Optionen"
-    echo "'Versteckte Dateien anzeigen' aktivieren)"
-    echo ""
-    echo "Zwei Moeglichkeiten:"
-    echo ""
-    echo "A) Bestehende Installation aktualisieren:"
-    echo "   Alles AUSSER config/config.php, uploads/ und backups/ in euren"
-    echo "   bestehenden Ordner web/hausverwaltung kopieren (ueberschreiben)."
-    echo "   Kein SQL-Schritt noetig, eure Datenbank bleibt wie sie ist."
+    echo "A) Bestehende Installation aktualisieren (empfohlen):"
+    echo "  sudo rsync -av --exclude 'config/config.php' --exclude 'uploads/' --exclude 'backups/' \\"
+    echo "      ${SYNOPKG_PKGDEST}/app/ /volume1/web/hausverwaltung/"
+    echo "  sudo chown -R http:http /volume1/web/hausverwaltung"
+    echo "  (Pfad anpassen, falls eure Installation woanders liegt)"
+    echo "  Kein SQL-Schritt noetig, eure Datenbank bleibt wie sie ist."
     echo ""
     echo "B) Neue, eigenstaendige Installation:"
-    echo "   Alles in einen NEUEN Ordner unter web/ kopieren, danach einmalig"
-    echo "   EINMALIG_IN_PHPMYADMIN_AUSFUEHREN.sql in phpMyAdmin importieren"
-    echo "   (Reiter Importieren, Datei auswaehlen, Los), danach loeschen."
-    echo "   Login danach: admin / hausverwaltung (bitte sofort aendern)."
+    echo "  sudo mkdir -p /volume1/web/hausverwaltung_neu"
+    echo "  sudo cp -r ${SYNOPKG_PKGDEST}/app/. /volume1/web/hausverwaltung_neu/"
+    echo "  sudo chown -R http:http /volume1/web/hausverwaltung_neu"
+    echo "  Danach einmalig EINMALIG_IN_PHPMYADMIN_AUSFUEHREN.sql aus diesem"
+    echo "  neuen Ordner in phpMyAdmin importieren, danach loeschen."
+    echo "  Login danach: admin / hausverwaltung (bitte sofort aendern)."
 } > "$SYNOPKG_TEMP_LOGFILE" 2>/dev/null || true
 
 exit 0

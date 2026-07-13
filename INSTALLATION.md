@@ -3,11 +3,10 @@
 Es gibt jetzt zwei Wege, die App zu installieren – auf der Synology als
 eigenes Paket, oder lokal auf einem PC über Docker.
 
-**Ehrlicher Hinweis vorab:** Beides wurde sorgfältig nach Synologys
-offizieller Dokumentation gebaut, konnte aber in dieser Umgebung nicht auf
-echter Synology-Hardware bzw. mit laufendem Docker getestet werden. Bitte
-den ersten Testlauf mit etwas Zeitpuffer einplanen, falls doch noch etwas
-nachjustiert werden muss.
+**Stand:** Die Synology-Paket-Installation (Variante A/B unten) wurde
+mittlerweile auf echter Hardware erfolgreich getestet (Paket-Installation
++ Sync-Schritt per SSH). Der Docker-Weg wurde bisher nicht auf echter
+Hardware/einem echten PC getestet.
 
 Nutzungsbedingungen: [EULA.md](EULA.md) (wird bei der Synology-Installation
 automatisch als Lizenztext angezeigt und muss akzeptiert werden).
@@ -49,30 +48,38 @@ Paket-Zentrum.
    herunterladen.
 2. Synology **Paket-Zentrum** öffnen → oben rechts **Manuell installieren**
    → die `.spk`-Datei auswählen → durchklicken.
-3. Nach der Installation zeigt das Paket-Zentrum eine **Anleitung** an
-   (auch später über die Paket-Details einsehbar) – der eine manuelle
-   Schritt, der jetzt noch fehlt:
-   - **File Station** öffnen → falls `appstore` nicht sichtbar ist:
-     Ansicht → Optionen → „Versteckte Dateien anzeigen" aktivieren
-   - Ordner **appstore → HausVerwaltung → target → app** öffnen – dort
-     liegen die frisch installierten Programmdateien
-   - Alles daraus in euren Web-Ordner kopieren (siehe die zwei
-     Möglichkeiten unten)
+3. Nach der Installation zeigt das Paket-Zentrum eine Anleitung an – der
+   eine manuelle Schritt, der jetzt noch fehlt, läuft über **SSH**
+   (der Paketordner ist NICHT über File Station erreichbar, auch nicht
+   über „appstore" – das war ein früherer Irrtum in dieser Anleitung).
+   Falls noch nicht aktiviert: Systemsteuerung → Terminal & SNMP →
+   SSH-Dienst aktivieren.
 
-### Zwei Möglichkeiten beim Kopieren
+### Zwei Möglichkeiten beim Kopieren (per SSH, getestet)
 
-**A) Bestehende manuelle Installation aktualisieren (empfohlen für euch):**
-Alles **außer** `config/config.php`, `uploads/` und `backups/` in den
-bestehenden Ordner `web/hausverwaltung` kopieren und überschreiben.
-Kein SQL-Schritt nötig – eure Datenbank und Zugangsdaten bleiben
-unverändert. Damit bekommt die bestehende Installation die neuen
-Programmdateien, ohne dass irgendwelche Daten angefasst werden.
+Mit einem SSH-Client (z. B. PuTTY) verbinden: `ssh admin@<NAS-IP>`
+(eigenen Admin-Benutzernamen verwenden).
+
+**A) Bestehende manuelle Installation aktualisieren (empfohlen):**
+```bash
+sudo rsync -av --exclude 'config/config.php' --exclude 'uploads/' --exclude 'backups/' \
+    /var/packages/HausVerwaltung/target/app/ /volume1/web/hausverwaltung/
+sudo chown -R http:http /volume1/web/hausverwaltung
+```
+Pfad `/volume1/web/hausverwaltung/` an den tatsächlichen Installationsort
+anpassen, falls abweichend (in File Station auf den Ordner „web"
+klicken, der Pfad steht dann oben in der Adressleiste). Kein SQL-Schritt
+nötig – eure Datenbank und Zugangsdaten bleiben unverändert.
 
 **B) Neue, eigenständige Installation:**
-Alles in einen neuen Ordner unter `web/` kopieren (z. B.
-`web/hausverwaltung_neu`), danach einmalig `EINMALIG_IN_PHPMYADMIN_AUSFUEHREN.sql`
-aus diesem Ordner in phpMyAdmin importieren (Reiter „Importieren", Datei
-auswählen, „Los"), die Datei danach löschen. Login danach: `admin` /
+```bash
+sudo mkdir -p /volume1/web/hausverwaltung_neu
+sudo cp -r /var/packages/HausVerwaltung/target/app/. /volume1/web/hausverwaltung_neu/
+sudo chown -R http:http /volume1/web/hausverwaltung_neu
+```
+Danach einmalig `EINMALIG_IN_PHPMYADMIN_AUSFUEHREN.sql` aus diesem neuen
+Ordner in phpMyAdmin importieren (Reiter „Importieren", Datei auswählen,
+„Los"), die Datei danach löschen. Login danach: `admin` /
 `hausverwaltung` (bitte sofort ändern). Diese Variante legt eine eigene,
 neue Datenbank an (`hausverwaltung_paket`) und lässt eure bestehende
 Installation komplett unangetastet.
@@ -81,12 +88,11 @@ Installation komplett unangetastet.
 Löscht bewusst **nichts** außerhalb des eigenen Paketordners – eure
 Web-Ordner-Kopie (egal ob Variante A oder B) und alle Datenbanken bleiben
 vollständig erhalten, da das Paket sie nie selbst angelegt/verändert hat
-(nur ihr, beim manuellen Kopieren).
+(nur ihr, beim manuellen Kopieren per SSH).
 
 ### Bei jedem Update
-Genau derselbe manuelle Kopierschritt: Paket-Zentrum zeigt „Update
-verfügbar" → aktualisieren → danach wieder den Inhalt aus
-`appstore → HausVerwaltung → target → app` in euren Web-Ordner kopieren
+Genau derselbe SSH-Befehl (Variante A oder B von oben): Paket-Zentrum
+zeigt „Update verfügbar" → aktualisieren → danach den rsync/cp-Befehl
 (außer `config/config.php`, `uploads/`, `backups/`).
 
 ### Neue Version veröffentlichen (nach Code-Änderungen)

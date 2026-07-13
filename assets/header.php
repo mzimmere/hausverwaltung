@@ -83,6 +83,13 @@ $currentPage = basename($_SERVER['PHP_SELF']);
 // ------------------------------------------------------------
 $changelog = [
     [
+        'version' => 'v49',
+        'datum'   => 'Juli 2026',
+        'punkte'  => [
+            'Synology-Paket: Installations-/Update-Anleitung korrigiert – der Paketordner ist entgegen der vorherigen Anleitung NICHT über File Station erreichbar, sondern nur per SSH; auf echter Hardware getestet und bestätigt funktionierend',
+        ],
+    ],
+    [
         'version' => 'v48',
         'datum'   => 'Juli 2026',
         'punkte'  => [

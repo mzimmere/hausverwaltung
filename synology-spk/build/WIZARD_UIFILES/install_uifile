@@ -4,7 +4,7 @@
         "desc": "Diese App benoetigt <b>Web Station</b>, <b>MariaDB 10</b> und <b>PHP 8.2</b> (werden automatisch mitinstalliert, falls noch nicht vorhanden)."
     },
     {
-        "desc": "Nach der Installation ist <b>ein manueller Schritt</b> noetig: die Programmdateien liegen in einem eigenen Paketordner und muessen einmalig per File Station in euren Web-Ordner kopiert werden (genaue Anleitung erscheint direkt nach der Installation in diesem Fenster)."
+        "desc": "Nach der Installation ist <b>ein manueller Schritt per SSH</b> noetig, um die Programmdateien in euren Web-Ordner zu uebernehmen (genaue Befehle erscheinen direkt nach der Installation in diesem Fenster). Falls SSH noch nicht aktiviert ist: Systemsteuerung &rarr; Terminal &amp; SNMP."
     },
     {
         "desc": "Dabei habt ihr die Wahl: entweder eine bestehende manuelle Installation damit aktualisieren (Datenbank/Uploads bleiben unangetastet), oder eine komplett neue, eigenstaendige Installation anlegen."

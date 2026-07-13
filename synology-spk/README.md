@@ -2,7 +2,7 @@
 
 Baut `HausVerwaltung.spk` – das Synology-Paket für Paket-Zentrum.
 
-## Architektur (nach zwei gescheiterten Anläufen tatsächlich getestet)
+## Architektur (nach zwei gescheiterten Anläufen erfolgreich getestet)
 
 Läuft **ohne Root-Rechte** (Pflicht seit DSM 7 für unsignierte
 Drittanbieter-Pakete). Zwei frühere Ansätze sind auf echter Hardware
@@ -18,18 +18,25 @@ gescheitert, bevor dieser hier bestätigt funktioniert hat:
    Korrektur eines gefundenen Fehlers dort). Vermutlich ein Detail im
    Webservice-Resource-Schema, das ohne offizielles Synology-Toolkit
    nicht zuverlässig rekonstruierbar war.
-3. **Aktueller Ansatz (funktioniert):** nur `conf/privilege`
-   (`run-as: package`) – bestätigt per Diagnose-Testpaket erfolgreich
-   installierbar. Kein `conf/resource` mehr. Die App-Dateien landen dafür
-   im eigenen Paket-Sandbox-Ordner (`SYNOPKG_PKGDEST/app`, sichtbar in
-   File Station unter `appstore → HausVerwaltung → target → app`, ggf.
-   erst „Versteckte Dateien anzeigen" aktivieren) und müssen **einmalig
-   manuell per File Station** in den eigentlichen Web-Ordner kopiert
-   werden (Anleitung erscheint nach der Installation).
+3. **Aktueller Ansatz (bestätigt funktionierend auf echter Hardware):**
+   nur `conf/privilege` (`run-as: package`), kein `conf/resource` mehr.
+   Die App-Dateien landen im eigenen Paket-Sandbox-Ordner
+   (`SYNOPKG_PKGDEST/app` = `/var/packages/HausVerwaltung/target/app`).
+   **Dieser Ordner ist NICHT über File Station erreichbar** (auch nicht
+   über ein vermeintliches „appstore" – das war ein Irrtum in einer
+   früheren Version dieser Doku). Der Zugriff läuft über **SSH**
+   (`sudo rsync`/`sudo cp`, siehe `postinst`-Anleitung bzw.
+   `INSTALLATION.md`) - das wurde tatsächlich getestet und funktioniert.
 
 **Vorteil dieses Ansatzes:** Man kann beim Kopieren wählen, ob man eine
 bestehende manuelle Installation aktualisiert (Datenbank/Uploads bleiben
 unangetastet) oder eine komplett neue anlegt.
+
+**Wichtig zu wissen:** Der Sync-Schritt ist manuell (SSH-Befehl), kein
+automatisches Ein-Klick-Update. Package Center zeigt zwar zuverlässig
+„Update verfügbar" und lädt die neue Version in den Sandbox-Ordner - der
+Übernahme-Schritt in den tatsächlichen Web-Ordner muss aber nach jedem
+Update erneut per SSH ausgeführt werden.
 
 ## Ordner
 
@@ -93,15 +100,15 @@ Produktivdaten!), `backups/install.php`, `backups/passwort_reset.php`.
    (`install_dep_packages` in `INFO`).
 2. DSM extrahiert `package.tgz` nach `SYNOPKG_PKGDEST/app` – als
    eingeschränkter Paket-Nutzer (`conf/privilege`), kein Root nötig.
-3. `postinst` zeigt die Anleitung für den manuellen Kopierschritt an
-   (`$SYNOPKG_TEMP_LOGFILE`).
+3. `postinst` zeigt die genauen SSH-Befehle für den manuellen
+   Sync-Schritt an (`$SYNOPKG_TEMP_LOGFILE`).
+4. Per SSH: `sudo rsync`/`sudo cp` aus `SYNOPKG_PKGDEST/app` in den
+   echten Web-Ordner (siehe `INSTALLATION.md` für die genauen Befehle).
 
 ## Bekannte Grenzen
 
-- Der Kopierschritt ist manuell (File Station), kein echtes Ein-Klick-
-  Update im vollen Sinne – dafür zuverlässig getestet, im Gegensatz zu
-  den beiden vorherigen (gescheiterten) Ansätzen.
-- Ob `SYNOPKG_PKGDEST/app` bei jedem DSM/Package-Center-Update
-  zuverlässig unter demselben File-Station-Pfad (`appstore →
-  HausVerwaltung → target → app`) auffindbar bleibt, wurde nur einmalig
-  bestätigt, nicht über mehrere DSM-Versionen hinweg getestet.
+- Der Sync-Schritt ist manuell (SSH), kein echtes Ein-Klick-Update –
+  dafür zuverlässig getestet und bestätigt funktionierend, im Gegensatz
+  zu den beiden vorherigen (gescheiterten) Ansätzen.
+- SSH muss auf der NAS aktiviert sein (Systemsteuerung → Terminal &
+  SNMP).
