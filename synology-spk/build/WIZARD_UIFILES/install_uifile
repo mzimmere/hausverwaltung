@@ -1,0 +1,12 @@
+[{
+    "step_title": "Hinweis vor der Installation",
+    "items": [{
+        "desc": "Diese App benoetigt <b>Web Station</b> und <b>MariaDB 10</b> (werden automatisch mitinstalliert, falls noch nicht vorhanden)."
+    },
+    {
+        "desc": "Nach der Installation ist <b>ein manueller Schritt</b> noetig: eine vorbereitete SQL-Datei muss einmalig in phpMyAdmin importiert werden. Die genaue Anleitung erscheint direkt nach der Installation in diesem Fenster."
+    },
+    {
+        "desc": "Falls unter <code>/var/services/web/hausverwaltung</code> bereits eine bestehende Installation liegt, werden deren Datenbank-Zugangsdaten, Uploads und Backups nicht veraendert - es werden nur die Programmdateien aktualisiert."
+    }]
+}]

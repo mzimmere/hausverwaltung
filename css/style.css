@@ -1,0 +1,19 @@
+:root {
+    --primary: #1a3a5c;
+    --accent: #2d7dd2;
+}
+body { background: #f4f6f9; }
+.navbar { background: var(--primary) !important; }
+.card { border: none; box-shadow: 0 2px 8px rgba(0,0,0,0.07); border-radius: 10px; }
+.card-header { border-radius: 10px 10px 0 0 !important; background: var(--primary); color: #fff; font-weight: 600; }
+.kpi-card { border-radius: 12px; padding: 1.5rem; color: #fff; min-height: 110px; }
+.kpi-card .kpi-val { font-size: 2rem; font-weight: 700; }
+.kpi-card .kpi-label { font-size: 0.85rem; opacity: 0.85; }
+.bg-primary-dark { background: var(--primary); }
+.table th { background: #f0f4f8; }
+.badge-positiv { background:#198754; }
+.badge-negativ { background:#dc3545; }
+.saldo-pos { color: #198754; font-weight: 700; }
+.saldo-neg { color: #dc3545; font-weight: 700; }
+.btn-primary { background: var(--accent); border-color: var(--accent); }
+.btn-primary:hover { background: var(--primary); border-color: var(--primary); }

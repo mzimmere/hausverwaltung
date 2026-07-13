@@ -1,0 +1,114 @@
+#!/bin/sh
+# Kopiert die Anwendung nach /var/services/web/hausverwaltung (dort erwartet
+# Web Station sie) und bereitet die Datenbank vor.
+#
+# WICHTIG: Erkennt eine bereits bestehende Installation (z. B. die
+# produktive, bisher manuell eingerichtete Instanz) und laesst in diesem
+# Fall config/config.php, uploads/ und backups/ unangetastet - dort liegen
+# echte Zugangsdaten bzw. echte Nutzdaten. Es werden dann nur die
+# Programmdateien aktualisiert.
+
+set -e
+
+WEBROOT="/var/services/web/hausverwaltung"
+PAYLOAD="${SYNOPKG_PKGDEST}/app"
+
+mkdir -p "$WEBROOT"
+
+EXISTING_INSTALL=0
+if [ -f "$WEBROOT/config/config.php" ] && ! grep -q "wird-bei-installation-gesetzt" "$WEBROOT/config/config.php"; then
+    EXISTING_INSTALL=1
+fi
+
+for item in "$PAYLOAD"/*; do
+    name=$(basename "$item")
+    case "$name" in
+        uploads|backups)
+            if [ ! -d "$WEBROOT/$name" ]; then
+                cp -a "$item" "$WEBROOT/$name"
+            fi
+            ;;
+        config)
+            mkdir -p "$WEBROOT/config"
+            for cfgfile in "$item"/*; do
+                cfgname=$(basename "$cfgfile")
+                if [ "$cfgname" = "config.php" ] && [ "$EXISTING_INSTALL" = "1" ]; then
+                    continue
+                fi
+                cp -a "$cfgfile" "$WEBROOT/config/$cfgname"
+            done
+            ;;
+        *)
+            rm -rf "${WEBROOT:?}/${name:?}"
+            cp -a "$item" "$WEBROOT/$name"
+            ;;
+    esac
+done
+
+chown -R http:http "$WEBROOT/uploads" "$WEBROOT/backups" 2>/dev/null || true
+chmod -R 775 "$WEBROOT/uploads" "$WEBROOT/backups" 2>/dev/null || true
+
+if [ "$EXISTING_INSTALL" = "1" ]; then
+    {
+        echo "Hausverwaltung wurde aktualisiert."
+        echo ""
+        echo "Bestehende config/config.php, uploads/ und backups/ wurden NICHT"
+        echo "veraendert. Falls diese Version neue Datenbank-Tabellen/Spalten"
+        echo "braucht, bitte die passenden Dateien aus dem sql/-Ordner der"
+        echo "Anwendung einmalig in phpMyAdmin ausfuehren (siehe Anleitung)."
+        echo ""
+        echo "App: http://$(hostname)/hausverwaltung/"
+    } > "$SYNOPKG_TEMP_LOGFILE"
+    exit 0
+fi
+
+# ── Frischinstallation: Zugangsdaten generieren + Setup-SQL bereitlegen ──
+DB_PASS=$(head -c 33 /dev/urandom | md5sum | cut -c1-24)
+
+sed -i "s/define('DB_PASS'.*/define('DB_PASS', '${DB_PASS}');/" "$WEBROOT/config/config.php"
+
+# Liegt bewusst IM Webordner (per File Station leicht auffindbar unter
+# "web" -> "hausverwaltung"), nicht unter /var/packages/ - dieser Pfad ist
+# in File Station normalerweise gar nicht sichtbar. Der Zugriff per Browser
+# wird stattdessen per .htaccess gesperrt (siehe unten).
+SETUP_SQL="$WEBROOT/EINMALIG_IN_PHPMYADMIN_AUSFUEHREN.sql"
+
+{
+    echo "-- Hausverwaltung - Ersteinrichtung der Datenbank"
+    echo "-- Einmalig komplett in phpMyAdmin ausfuehren (Reiter 'Importieren',"
+    echo "-- diese Datei auswaehlen, 'Los'). Danach ist die Anwendung startklar."
+    echo "-- Diese Datei danach loeschen (File Station)."
+    echo ""
+    echo "CREATE DATABASE IF NOT EXISTS hausverwaltung CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
+    echo "CREATE USER IF NOT EXISTS 'hausverwaltung'@'localhost' IDENTIFIED BY '${DB_PASS}';"
+    echo "GRANT ALL PRIVILEGES ON hausverwaltung.* TO 'hausverwaltung'@'localhost';"
+    echo "FLUSH PRIVILEGES;"
+    echo ""
+    cat "$WEBROOT/sql/install_complete.sql"
+} > "$SETUP_SQL"
+chmod 600 "$SETUP_SQL"
+
+# Zugriff per Browser auf *.sql im Webordner sperren (defense in depth -
+# die Datei enthaelt das frisch generierte Datenbank-Passwort).
+if [ ! -f "$WEBROOT/.htaccess" ] || ! grep -q '\\.sql' "$WEBROOT/.htaccess" 2>/dev/null; then
+    {
+        echo "<FilesMatch \"\\.sql$\">"
+        echo "  Require all denied"
+        echo "</FilesMatch>"
+    } >> "$WEBROOT/.htaccess"
+fi
+
+{
+    echo "Hausverwaltung wurde installiert - ein letzter Schritt fehlt noch:"
+    echo ""
+    echo "1. phpMyAdmin oeffnen (falls noch nicht installiert: Paket-Zentrum)"
+    echo "2. Reiter 'Importieren' -> Datei auswaehlen (per File Station unter"
+    echo "   'web' -> 'hausverwaltung'):"
+    echo "   EINMALIG_IN_PHPMYADMIN_AUSFUEHREN.sql"
+    echo "3. Auf 'OK'/'Los' klicken, danach die Datei loeschen"
+    echo ""
+    echo "Danach: http://$(hostname)/hausverwaltung/"
+    echo "Login: admin / hausverwaltung (bitte sofort nach dem ersten Login aendern)"
+} > "$SYNOPKG_TEMP_LOGFILE"
+
+exit 0

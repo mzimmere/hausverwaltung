@@ -1,0 +1,10 @@
+#!/bin/sh
+# Wird vor der Installation ausgefuehrt. Nur Pruefungen, keine Aenderungen
+# (siehe Synology-Konvention: preinst prueft, postinst aendert).
+
+if [ ! -d /var/services/web ]; then
+    echo "Web Station scheint nicht eingerichtet zu sein (/var/services/web fehlt). Bitte Web Station im Paket-Zentrum installieren und einmal oeffnen." >&2
+    exit 1
+fi
+
+exit 0

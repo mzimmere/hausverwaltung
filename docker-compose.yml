@@ -1,0 +1,42 @@
+services:
+  web:
+    build: .
+    container_name: hausverwaltung_web
+    restart: unless-stopped
+    ports:
+      - "${APP_PORT:-8080}:80"
+    volumes:
+      - ./:/var/www/html
+      - vendor_data:/var/www/html/vendor
+      - ./uploads:/var/www/html/uploads
+      - ./backups:/var/www/html/backups
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      - DB_HOST=db
+      - DB_NAME=${DB_NAME:-hausverwaltung}
+      - DB_USER=${DB_USER:-hvuser}
+      - DB_PASS=${DB_PASS:?Bitte zuerst start.bat/start.sh ausführen oder .env aus .env.example anlegen}
+
+  db:
+    image: mariadb:10.11
+    container_name: hausverwaltung_db
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASS:?Bitte zuerst start.bat/start.sh ausführen oder .env aus .env.example anlegen}
+      MYSQL_DATABASE: ${DB_NAME:-hausverwaltung}
+      MYSQL_USER: ${DB_USER:-hvuser}
+      MYSQL_PASSWORD: ${DB_PASS:?Bitte zuerst start.bat/start.sh ausführen oder .env aus .env.example anlegen}
+    volumes:
+      - db_data:/var/lib/mysql
+      - ./sql/install_complete.sql:/docker-entrypoint-initdb.d/install_complete.sql
+    healthcheck:
+      test: ["CMD-SHELL", "mariadb-admin ping -h 127.0.0.1 -uroot -p\"$$MYSQL_ROOT_PASSWORD\" --silent"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+volumes:
+  db_data:
+  vendor_data:

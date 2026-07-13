@@ -1,0 +1,14 @@
+#!/bin/sh
+# Absichtlich werden hier KEINE Daten geloescht: Datenbank, Uploads und
+# Backups liegen ausserhalb des von DSM automatisch entfernten
+# Paketordners (/var/services/web/hausverwaltung) und bleiben erhalten,
+# falls das Paket spaeter erneut installiert wird.
+
+{
+    echo "Hausverwaltung wurde deinstalliert."
+    echo "Programmdateien, Datenbank, Uploads und Backups wurden NICHT geloescht."
+    echo "Um wirklich alles zu entfernen: /var/services/web/hausverwaltung per"
+    echo "File Station loeschen und die Datenbank 'hausverwaltung' per phpMyAdmin."
+} > "$SYNOPKG_TEMP_LOGFILE" 2>/dev/null || true
+
+exit 0

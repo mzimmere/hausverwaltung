@@ -1,0 +1,356 @@
+/* ============================================================
+   Hausverwaltung – Stylesheet
+   ============================================================ */
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+    --primary:   #2c5f8a;
+    --primary-l: #3a7abf;
+    --accent:    #e8a020;
+    --success:   #27ae60;
+    --danger:    #c0392b;
+    --bg:        #f4f6f9;
+    --card-bg:   #ffffff;
+    --text:      #2d3748;
+    --muted:     #718096;
+    --border:    #e2e8f0;
+    --radius:    8px;
+    --shadow:    0 2px 8px rgba(0,0,0,.08);
+    --row-hover: #f0f5fb;
+    --input-bg:  #ffffff;
+    --heading:   #2c5f8a;   /* Überschriften (Cards, Seitentitel) */
+    --tile-pos:  #f0fff4;   /* Stat-Kachel positiv */
+    --tile-neg:  #fef2f2;   /* Stat-Kachel negativ */
+    --tile-neutral: #f7fafc;
+}
+
+/* ============================================================
+   DARKMODE – aktiv, wenn <html data-theme="dark">
+   Umschalter sitzt in der Navigationsleiste (header.php)
+   ============================================================ */
+:root[data-theme="dark"] {
+    --bg:        #10151f;
+    --card-bg:   #1a2130;
+    --text:      #dfe3ec;
+    --muted:     #8b93a7;
+    --border:    #2a3347;
+    --shadow:    0 2px 12px rgba(0,0,0,.45);
+    --row-hover: #212c40;
+    --input-bg:  #141a26;
+    --heading:   #9cc2ff;
+    --tile-pos:  rgba(39,174,96,.13);
+    --tile-neg:  rgba(192,57,43,.15);
+    --tile-neutral: rgba(255,255,255,.05);
+}
+
+body { font-family: 'Segoe UI', Arial, sans-serif; background: var(--bg); color: var(--text); font-size: 15px; }
+
+/* Navbar (alt – wird von der neuen .topbar in header.php nicht mehr genutzt,
+   bleibt für evtl. Altseiten erhalten) */
+.navbar {
+    background: var(--primary);
+    display: flex; align-items: center; gap: 2rem;
+    padding: .8rem 1.5rem;
+    position: sticky; top: 0; z-index: 100;
+    box-shadow: 0 2px 6px rgba(0,0,0,.25);
+}
+.nav-brand { color: #fff; font-size: 1.2rem; font-weight: 700; white-space: nowrap; }
+.nav-links  { list-style: none; display: flex; flex-wrap: wrap; gap: .25rem; }
+.nav-links a {
+    color: #cce0f5; text-decoration: none;
+    padding: .4rem .75rem; border-radius: 5px;
+    font-size: .9rem; transition: background .15s;
+}
+.nav-links a:hover { background: var(--primary-l); color: #fff; }
+
+/* Container */
+.container { max-width: 1200px; margin: 1.5rem auto; padding: 0 1.5rem; }
+
+/* Cards */
+.card {
+    background: var(--card-bg); border-radius: var(--radius);
+    box-shadow: var(--shadow); padding: 1.5rem; margin-bottom: 1.5rem;
+}
+.card h2 { font-size: 1.1rem; color: var(--heading); margin-bottom: 1rem; border-bottom: 2px solid var(--border); padding-bottom: .5rem; }
+
+/* Dashboard grid */
+.dashboard-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px,1fr)); gap: 1rem; margin-bottom: 1.5rem; }
+.kpi-card {
+    background: var(--card-bg); border-radius: var(--radius); box-shadow: var(--shadow);
+    padding: 1.25rem; text-align: center;
+    border-top: 4px solid var(--primary);
+}
+.kpi-card.accent  { border-top-color: var(--accent); }
+.kpi-card.success { border-top-color: var(--success); }
+.kpi-card.danger  { border-top-color: var(--danger); }
+.kpi-label { font-size: .8rem; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; }
+.kpi-value { font-size: 2rem; font-weight: 700; color: var(--heading); }
+.kpi-card.accent  .kpi-value { color: var(--accent); }
+.kpi-card.success .kpi-value { color: var(--success); }
+.kpi-card.danger  .kpi-value { color: var(--danger); }
+
+/* Tables */
+.table-wrap { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-size: .9rem; }
+th { background: var(--primary); color: #fff; padding: .65rem 1rem; text-align: left; font-weight: 600; }
+:root[data-theme="dark"] th { background: #233150; }
+td { padding: .6rem 1rem; border-bottom: 1px solid var(--border); }
+tr:last-child td { border-bottom: none; }
+tr:hover td { background: var(--row-hover); }
+.text-right { text-align: right; }
+.text-center { text-align: center; }
+
+/* Badges */
+.badge { display: inline-block; padding: .2rem .55rem; border-radius: 12px; font-size: .78rem; font-weight: 600; }
+.badge-success { background: #d4edda; color: #155724; }
+.badge-danger  { background: #f8d7da; color: #721c24; }
+.badge-info    { background: #cce5ff; color: #004085; }
+.badge-warning { background: #fff3cd; color: #856404; }
+:root[data-theme="dark"] .badge-success { background: rgba(39,174,96,.18);  color: #6fdc9a; }
+:root[data-theme="dark"] .badge-danger  { background: rgba(192,57,43,.22);  color: #ff9b8f; }
+:root[data-theme="dark"] .badge-info    { background: rgba(110,168,255,.16); color: #9cc2ff; }
+:root[data-theme="dark"] .badge-warning { background: rgba(232,160,32,.16); color: #ffd97a; }
+
+/* Forms */
+.form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px,1fr)); gap: 1rem; }
+.form-group { display: flex; flex-direction: column; gap: .3rem; }
+.form-group label { font-size: .85rem; font-weight: 600; color: var(--muted); }
+.form-group input,
+.form-group select,
+.form-group textarea {
+    border: 1px solid var(--border); border-radius: 5px;
+    padding: .5rem .75rem; font-size: .95rem; color: var(--text);
+    background: var(--input-bg); transition: border-color .15s;
+}
+.form-group input:focus,
+.form-group select:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(44,95,138,.15); }
+:root[data-theme="dark"] .form-group input:focus,
+:root[data-theme="dark"] .form-group select:focus { border-color: #6ea8ff; box-shadow: 0 0 0 3px rgba(110,168,255,.2); }
+.form-group textarea { resize: vertical; min-height: 80px; }
+
+/* Buttons */
+.btn {
+    display: inline-block; padding: .5rem 1.1rem; border-radius: 5px;
+    font-size: .9rem; font-weight: 600; cursor: pointer;
+    text-decoration: none; border: none; transition: opacity .15s;
+}
+.btn:hover { opacity: .85; }
+.btn-primary { background: var(--primary); color: #fff; }
+.btn-success { background: var(--success); color: #fff; }
+.btn-danger  { background: var(--danger);  color: #fff; }
+.btn-accent  { background: var(--accent);  color: #fff; }
+.btn-sm { padding: .3rem .7rem; font-size: .82rem; }
+.btn-group { display: flex; gap: .5rem; flex-wrap: wrap; }
+:root[data-theme="dark"] .btn-primary { background: #3a6ea8; }
+
+/* Alerts */
+.alert { padding: .85rem 1.25rem; border-radius: var(--radius); margin-bottom: 1rem; font-weight: 500; }
+.alert-success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+.alert-error   { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+.alert-info    { background: #cce5ff; color: #004085; border: 1px solid #b8daff; }
+:root[data-theme="dark"] .alert-success { background: rgba(39,174,96,.15);  color: #6fdc9a; border-color: rgba(39,174,96,.35); }
+:root[data-theme="dark"] .alert-error   { background: rgba(192,57,43,.18);  color: #ff9b8f; border-color: rgba(192,57,43,.4); }
+:root[data-theme="dark"] .alert-info    { background: rgba(110,168,255,.14); color: #9cc2ff; border-color: rgba(110,168,255,.35); }
+
+/* Page header */
+.page-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.25rem; }
+.page-header h1 { font-size: 1.4rem; color: var(--heading); }
+
+/* Saldo colors */
+.positiv { color: var(--danger); font-weight: 700; }   /* Nachzahlung */
+.negativ { color: var(--success); font-weight: 700; }  /* Guthaben */
+
+/* Footer */
+.footer { text-align: center; padding: 1.5rem; color: var(--muted); font-size: .85rem; border-top: 1px solid var(--border); margin-top: 2rem; }
+
+/* ============================================================
+   STAT-KACHELN (z. B. Wirtschaftlichkeit auf dem Dashboard)
+   ============================================================ */
+.stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px,1fr)); gap: 1rem; margin-bottom: 1.25rem; }
+.stat-tile { text-align: center; padding: 1rem; border-radius: 8px; background: var(--tile-neutral); }
+.stat-tile-pos { background: var(--tile-pos); }
+.stat-tile-neg { background: var(--tile-neg); }
+.stat-tile .stat-label { font-size: .8rem; color: var(--muted); text-transform: uppercase; }
+.stat-tile .stat-value { font-size: 1.6rem; font-weight: 700; }
+
+/* ============================================================
+   CHART-STANDARD – für alle grafischen Auswertungen
+   Balken wachsen beim Laden animiert hoch (gestaffelt)
+   und leuchten beim Überfahren mit Neon-Glow.
+
+   Verwendung:
+   <div class="chart">
+     <div class="chart-group">
+       <div class="chart-bar"
+            style="--bar-h: 73px; --bar-color: var(--success); --bar-i: 0"
+            title="Miete: 1.250,00 €"></div>
+       ...
+     </div>
+   </div>
+   --bar-h     Balkenhöhe in px
+   --bar-color Balkenfarbe (Neon-Glow übernimmt dieselbe Farbe)
+   --bar-i     Index für die gestaffelte Animation (0, 1, 2, …)
+   ============================================================ */
+.chart {
+    display: flex; align-items: flex-end; gap: 1.25rem;
+    height: 120px; padding: 0 .5rem;
+    border-bottom: 2px solid var(--border);
+    margin-bottom: .5rem;
+}
+.chart-group {
+    flex: 1; display: flex; gap: 3px;
+    align-items: flex-end; justify-content: center;
+    height: 100px;
+}
+.chart-bar {
+    width: 14px;
+    height: var(--bar-h, 2px);
+    background: var(--bar-color, var(--primary));
+    border-radius: 3px 3px 0 0;
+    transform-origin: bottom;
+    animation: chartGrow .7s cubic-bezier(.2, .8, .3, 1) both;
+    animation-delay: calc(var(--bar-i, 0) * 80ms);
+    transition: filter .15s, box-shadow .15s;
+    cursor: default;
+}
+.chart-bar:hover {
+    filter: brightness(1.25) saturate(1.2);
+    box-shadow: 0 0 8px var(--bar-color, var(--primary)),
+                0 0 20px var(--bar-color, var(--primary));
+}
+@keyframes chartGrow {
+    from { transform: scaleY(0); }
+    to   { transform: scaleY(1); }
+}
+.chart-labels { display: flex; gap: 1.25rem; padding: 0 .5rem; }
+.chart-label  { flex: 1; text-align: center; font-size: .75rem; color: var(--muted); }
+.chart-legend { display: flex; gap: 1.5rem; margin-top: .75rem; font-size: .8rem; color: var(--muted); }
+.chart-legend i {
+    display: inline-block; width: 10px; height: 10px;
+    border-radius: 2px; margin-right: 4px;
+}
+@media (prefers-reduced-motion: reduce) {
+    .chart-bar { animation: none; }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .navbar { flex-direction: column; gap: .5rem; }
+    .nav-links { justify-content: center; }
+    .dashboard-grid { grid-template-columns: repeat(2, 1fr); }
+    .form-grid { grid-template-columns: 1fr; }
+}
+
+/* Nav-User-Bereich (alt, s. o.) */
+.nav-user {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: .6rem;
+    white-space: nowrap;
+}
+.nav-user-name   { color: #cce0f5; font-size: .88rem; }
+.nav-user-link,
+.nav-user-logout {
+    color: #cce0f5;
+    font-size: .85rem;
+    text-decoration: none;
+    padding: .3rem .65rem;
+    border-radius: 4px;
+    border: 1px solid rgba(255,255,255,.25);
+    transition: background .15s;
+}
+.nav-user-link:hover   { background: rgba(255,255,255,.15); color: #fff; }
+.nav-user-logout       { border-color: rgba(255,100,100,.4); color: #ffaaaa; }
+
+/* Kosten-Tacho */
+.kosten-tacho-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px,1fr)); gap: 1.25rem; }
+.kosten-tacho { text-align: center; padding: .5rem 0; }
+.kosten-tacho-titel { font-weight: 600; margin-bottom: .25rem; color: var(--heading); }
+.kosten-tacho svg { display: block; margin: 0 auto; }
+.kosten-tacho-status { font-weight: 700; font-size: .9rem; margin-top: -.25rem; }
+.kosten-tacho-details { font-size: .8rem; color: var(--muted); margin-top: .3rem; line-height: 1.4; }
+
+/* Tacho-Animation: Bogen zeichnet sich, Zeiger dreht langsam hoch und leuchtet */
+.kosten-tacho-bogen {
+    stroke-dasharray: var(--tacho-boglaenge-gesamt);
+    stroke-dashoffset: var(--tacho-boglaenge-gesamt);
+    animation: tachoBogenWachsen 1.4s cubic-bezier(.22, .8, .25, 1) .15s both;
+}
+@keyframes tachoBogenWachsen {
+    to { stroke-dashoffset: var(--tacho-dashoffset-ziel); }
+}
+.kosten-tacho-nadel {
+    transform-origin: 100px 100px;
+    transform: rotate(var(--tacho-winkel));
+    animation: tachoNadelHochdrehen 1.4s cubic-bezier(.22, .8, .25, 1) .15s both,
+               tachoNadelLeuchten 2.2s ease-in-out .6s infinite alternate;
+}
+@keyframes tachoNadelHochdrehen {
+    from { transform: rotate(-90deg); }
+    to   { transform: rotate(var(--tacho-winkel)); }
+}
+@keyframes tachoNadelLeuchten {
+    from {
+        filter: drop-shadow(0 0 1px var(--tacho-glow)) drop-shadow(0 0 3px var(--tacho-glow));
+    }
+    to {
+        filter: drop-shadow(0 0 3px var(--tacho-glow)) drop-shadow(0 0 8px var(--tacho-glow));
+    }
+}
+@media (prefers-reduced-motion: reduce) {
+    .kosten-tacho-bogen, .kosten-tacho-nadel { animation: none; }
+    .kosten-tacho-bogen  { stroke-dashoffset: var(--tacho-dashoffset-ziel); }
+    .kosten-tacho-nadel  { transform: rotate(var(--tacho-winkel)); filter: drop-shadow(0 0 2px var(--tacho-glow)); }
+}
+.nav-user-logout:hover { background: rgba(200,50,50,.3); color: #fff; }
+
+/* Sortierbare Tabellen + Suche */
+th.th-sortierbar {
+    cursor: pointer;
+    user-select: none;
+    position: relative;
+    padding-right: 1.2rem !important;
+}
+th.th-sortierbar:hover { background: var(--tile-neutral, #f0f4f8); }
+th.th-sortierbar::after {
+    content: '⇅';
+    position: absolute;
+    right: .35rem;
+    opacity: .35;
+    font-size: .8em;
+}
+th.th-sortierbar.sort-asc::after  { content: '▲'; opacity: 1; }
+th.th-sortierbar.sort-desc::after { content: '▼'; opacity: 1; }
+
+.tabellen-suche {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: .5rem;
+    margin-bottom: .5rem;
+}
+.tabellen-suche-btn {
+    background: none;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: .3rem .55rem;
+    cursor: pointer;
+    font-size: .95rem;
+    line-height: 1;
+    color: var(--text);
+}
+.tabellen-suche-btn:hover { background: var(--tile-neutral, #f0f4f8); }
+.tabellen-suche.offen .tabellen-suche-btn { border-color: var(--accent, var(--primary)); }
+.tabellen-suche-feld {
+    display: none;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: .35rem .6rem;
+    font-size: .85rem;
+    background: var(--input-bg);
+    color: var(--text);
+    min-width: 220px;
+}
+.tabellen-suche.offen .tabellen-suche-feld { display: inline-block; }
