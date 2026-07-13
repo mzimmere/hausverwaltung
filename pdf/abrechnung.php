@@ -26,11 +26,11 @@ $abrId      = (int)($_GET['abrechnung']  ?? 0);
 
 // ── Daten laden ──────────────────────────────────────────────
 if ($abrId) {
-    $abrechnung = $db->prepare("SELECT a.*, w.bezeichnung, w.mieter_name, w.wohnflaeche, w.etage
+    $abrechnung = $db->prepare("SELECT a.*, w.bezeichnung, w.mieter_name, w.wohnflaeche, w.etage, w.objekt_id
         FROM abrechnungen a JOIN wohnungen w ON a.wohnung_id = w.id WHERE a.id = ?");
     $abrechnung->execute([$abrId]);
 } elseif ($wohnungId) {
-    $abrechnung = $db->prepare("SELECT a.*, w.bezeichnung, w.mieter_name, w.wohnflaeche, w.etage
+    $abrechnung = $db->prepare("SELECT a.*, w.bezeichnung, w.mieter_name, w.wohnflaeche, w.etage, w.objekt_id
         FROM abrechnungen a JOIN wohnungen w ON a.wohnung_id = w.id
         WHERE a.wohnung_id = ? AND a.jahr = ? LIMIT 1");
     $abrechnung->execute([$wohnungId, $jahr]);
@@ -51,12 +51,21 @@ if ($pdfUser['rolle'] === 'mieter'
     http_response_code(403);
     die('<p style="font-family:sans-serif;padding:2rem">Kein Zugriff.</p>');
 }
+// Admin/Leser: nur Abrechnungen des aktuell ausgewählten Hauses – verhindert,
+// dass über eine erratene/geänderte ID die Abrechnung eines anderen Hauses
+// abgerufen werden kann.
+if ($pdfUser['rolle'] !== 'mieter' && (int)$abrechnung['objekt_id'] !== aktivesObjekt()) {
+    http_response_code(403);
+    die('<p style="font-family:sans-serif;padding:2rem">Kein Zugriff.</p>');
+}
 
 $positionen = $db->prepare("SELECT * FROM abrechnungspositionen WHERE abrechnung_id = ? ORDER BY id");
 $positionen->execute([$abrechnung['id']]);
 $positionen = $positionen->fetchAll();
 
-$objekt = $db->query("SELECT * FROM objekt WHERE id = 1")->fetch();
+$objekt = $db->prepare("SELECT * FROM objekt WHERE id = ?");
+$objekt->execute([$abrechnung['objekt_id']]);
+$objekt = $objekt->fetch();
 
 // ── Zeitraum ermitteln ───────────────────────────────────────
 $vonDatum = '01.01.' . $abrechnung['jahr'];
@@ -89,6 +98,15 @@ $saldoBetrag = abs($abrechnung['saldo']);
 $istNachzahlung = $abrechnung['saldo'] > 0;
 $saldoLabel  = $istNachzahlung ? 'Nachzahlung' : 'Guthaben';
 $saldoFarbe  = $istNachzahlung ? '#c0392b' : '#27ae60';
+
+// Zahlungsziel (Tage), konfigurierbar je Haus – Standard 30 Tage
+$zahlungszielTage = (int)($objekt['abrechnung_zahlungsziel_tage'] ?? 30);
+$zahlungszielHinweis = $istNachzahlung
+    ? ('Bitte überweisen Sie den Betrag innerhalb von ' . $zahlungszielTage . ' Tagen.')
+    : 'Der Betrag wird mit der nächsten Vorauszahlung verrechnet.';
+
+// Bankverbindung nur anzeigen, wenn mindestens IBAN hinterlegt ist
+$bankverbindungVorhanden = !empty($objekt['abrechnung_bank_iban']);
 
 $verwalterAdresse = trim(
     ($objekt['verwalter_strasse'] ?? '') . ', ' .
@@ -326,15 +344,30 @@ tbody tr:hover td { background: #f8fafc; }
         <div>
             <div class="saldo-label" style="color:<?= $saldoFarbe ?>"><?= $saldoLabel ?></div>
             <div style="font-size:11px;color:#666;margin-top:2px">
-                <?= $istNachzahlung
-                    ? 'Bitte überweisen Sie den Betrag innerhalb von 30 Tagen.'
-                    : 'Der Betrag wird mit der nächsten Vorauszahlung verrechnet.' ?>
+                <?= htmlspecialchars($zahlungszielHinweis) ?>
             </div>
         </div>
         <div class="saldo-betrag" style="color:<?= $saldoFarbe ?>">
             <?= number_format($saldoBetrag, 2, ',', '.') ?> &euro;
         </div>
     </div>
+
+    <?php if ($istNachzahlung && $bankverbindungVorhanden): ?>
+    <!-- Bankverbindung -->
+    <div style="margin-bottom:1.5rem;padding:14px 18px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:6px;font-size:12px;line-height:1.7">
+        <div style="font-weight:700;margin-bottom:4px">Bankverbindung für die Überweisung</div>
+        <?php if (!empty($objekt['abrechnung_bank_inhaber'])): ?>Kontoinhaber: <?= htmlspecialchars($objekt['abrechnung_bank_inhaber']) ?><br><?php endif; ?>
+        IBAN: <?= htmlspecialchars($objekt['abrechnung_bank_iban']) ?><br>
+        <?php if (!empty($objekt['abrechnung_bank_bic'])): ?>BIC: <?= htmlspecialchars($objekt['abrechnung_bank_bic']) ?><br><?php endif; ?>
+        <?php if (!empty($objekt['abrechnung_bank_name'])): ?>Bank: <?= htmlspecialchars($objekt['abrechnung_bank_name']) ?><br><?php endif; ?>
+        Verwendungszweck: Nebenkosten <?= $abrechnung['jahr'] ?> – <?= htmlspecialchars($abrechnung['bezeichnung']) ?>
+    </div>
+    <?php endif; ?>
+
+    <?php if (!empty($objekt['abrechnung_vorlagentext'])): ?>
+    <!-- Persönlicher Text -->
+    <div style="margin-bottom:1.5rem;font-size:12.5px;line-height:1.6;color:#333;white-space:pre-line"><?= htmlspecialchars($objekt['abrechnung_vorlagentext']) ?></div>
+    <?php endif; ?>
 
     <!-- Fußzeile -->
     <div class="fusszeile">

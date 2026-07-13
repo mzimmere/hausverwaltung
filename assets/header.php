@@ -83,6 +83,14 @@ $currentPage = basename($_SERVER['PHP_SELF']);
 // ------------------------------------------------------------
 $changelog = [
     [
+        'version' => 'v50',
+        'datum'   => 'Juli 2026',
+        'punkte'  => [
+            'Abrechnung: Bankverbindung, Zahlungsziel (Tage) und persönlicher Vorlagentext sind jetzt je Haus einstellbar (Einstellungen → Abrechnungs-Vorlage) und erscheinen auf der Nebenkostenabrechnung',
+            'Fehler behoben: die PDF-Abrechnung zeigte bei mehreren Häusern immer die Verwalterdaten von Haus 1 – zeigt jetzt korrekt die Daten des Hauses, zu dem die jeweilige Abrechnung gehört',
+        ],
+    ],
+    [
         'version' => 'v49',
         'datum'   => 'Juli 2026',
         'punkte'  => [

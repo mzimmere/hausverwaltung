@@ -31,8 +31,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['objekt_speichern'])) 
     csrfPruefen();
     $wjMonat = max(1, min(12, (int)($_POST['wj_monat'] ?? 1)));
     $wjTag   = max(1, min(31, (int)($_POST['wj_tag'] ?? 1)));
-    $stmt = $db->prepare("UPDATE objekt SET name=?,strasse=?,plz=?,ort=?,baujahr=?,verwalter_name=?,verwalter_strasse=?,verwalter_plz=?,verwalter_ort=?,verwalter_telefon=?,verwalter_email=?,wirtschaftsjahr_start_monat=?,wirtschaftsjahr_start_tag=? WHERE id=?");
-    $stmt->execute([$_POST['name'],$_POST['strasse'],$_POST['plz'],$_POST['ort'],$_POST['baujahr']?:null,$_POST['vname'],$_POST['vstrasse'],$_POST['vplz'],$_POST['vort'],$_POST['vtelefon'],$_POST['vemail'],$wjMonat,$wjTag,$objektId]);
+    $zahlungsziel = max(0, (int)($_POST['zahlungsziel_tage'] ?? 30));
+    $stmt = $db->prepare("UPDATE objekt SET name=?,strasse=?,plz=?,ort=?,baujahr=?,verwalter_name=?,verwalter_strasse=?,verwalter_plz=?,verwalter_ort=?,verwalter_telefon=?,verwalter_email=?,wirtschaftsjahr_start_monat=?,wirtschaftsjahr_start_tag=?,abrechnung_bank_inhaber=?,abrechnung_bank_iban=?,abrechnung_bank_bic=?,abrechnung_bank_name=?,abrechnung_zahlungsziel_tage=?,abrechnung_vorlagentext=? WHERE id=?");
+    $stmt->execute([
+        $_POST['name'],$_POST['strasse'],$_POST['plz'],$_POST['ort'],$_POST['baujahr']?:null,
+        $_POST['vname'],$_POST['vstrasse'],$_POST['vplz'],$_POST['vort'],$_POST['vtelefon'],$_POST['vemail'],
+        $wjMonat,$wjTag,
+        trim($_POST['bank_inhaber'] ?? '') ?: null,
+        trim($_POST['bank_iban'] ?? '') ?: null,
+        trim($_POST['bank_bic'] ?? '') ?: null,
+        trim($_POST['bank_name'] ?? '') ?: null,
+        $zahlungsziel,
+        trim($_POST['vorlagentext'] ?? '') ?: null,
+        $objektId,
+    ]);
     $successMsg = 'Einstellungen gespeichert.';
 }
 
@@ -216,6 +228,26 @@ include '../assets/header.php';
         <div class="form-group"><label>Ort</label><input type="text" name="vort" value="<?= htmlspecialchars($obj['verwalter_ort'] ?? '') ?>"></div>
         <div class="form-group"><label>Telefon</label><input type="tel" name="vtelefon" value="<?= htmlspecialchars($obj['verwalter_telefon'] ?? '') ?>"></div>
         <div class="form-group"><label>E-Mail</label><input type="email" name="vemail" value="<?= htmlspecialchars($obj['verwalter_email'] ?? '') ?>"></div>
+    </div>
+</div>
+<div class="card">
+    <h2>Abrechnungs-Vorlage</h2>
+    <p style="color:var(--muted);font-size:.9rem;margin-bottom:1rem">
+        Erscheint auf jeder Nebenkostenabrechnung (PDF/Druckansicht) dieses Hauses.
+    </p>
+    <div class="form-grid">
+        <div class="form-group"><label>Kontoinhaber</label><input type="text" name="bank_inhaber" value="<?= htmlspecialchars($obj['abrechnung_bank_inhaber'] ?? '') ?>"></div>
+        <div class="form-group"><label>IBAN</label><input type="text" name="bank_iban" value="<?= htmlspecialchars($obj['abrechnung_bank_iban'] ?? '') ?>" placeholder="DE00 0000 0000 0000 0000 00"></div>
+        <div class="form-group"><label>BIC</label><input type="text" name="bank_bic" value="<?= htmlspecialchars($obj['abrechnung_bank_bic'] ?? '') ?>"></div>
+        <div class="form-group"><label>Bank</label><input type="text" name="bank_name" value="<?= htmlspecialchars($obj['abrechnung_bank_name'] ?? '') ?>"></div>
+        <div class="form-group">
+            <label>Zahlungsziel (Tage)</label>
+            <input type="number" name="zahlungsziel_tage" min="0" max="365" value="<?= (int)($obj['abrechnung_zahlungsziel_tage'] ?? 30) ?>">
+        </div>
+        <div class="form-group" style="grid-column: 1 / -1">
+            <label>Persönlicher Text <span style="font-weight:400;color:var(--muted)">(z. B. Dank, Kontakt bei Rückfragen – erscheint am Ende der Abrechnung)</span></label>
+            <textarea name="vorlagentext" rows="3" placeholder="z.B. Für Rückfragen stehe ich Ihnen gerne zur Verfügung."><?= htmlspecialchars($obj['abrechnung_vorlagentext'] ?? '') ?></textarea>
+        </div>
     </div>
 </div>
 <div style="padding:0 0 1.5rem"><button type="submit" class="btn btn-primary">Einstellungen speichern</button></div>
