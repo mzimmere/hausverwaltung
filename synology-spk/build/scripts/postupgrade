@@ -1,0 +1,21 @@
+#!/bin/sh
+# Gleiche Anleitung wie postinst - nach jedem Update muss der SSH-Sync
+# erneut ausgefuehrt werden, damit die neuen Dateien im Web-Ordner
+# ankommen.
+{
+    echo "Hausverwaltung wurde aktualisiert - Sync-Schritt erneut ausfuehren"
+    echo "(per SSH, siehe Systemsteuerung -> Terminal & SNMP):"
+    echo ""
+    echo "A) Bestehende Installation aktualisieren (empfohlen):"
+    echo "  sudo rsync -av --exclude 'config/config.php' --exclude 'uploads/' --exclude 'backups/' \\"
+    echo "      ${SYNOPKG_PKGDEST}/app/ /volume1/web/hausverwaltung/"
+    echo "  sudo chown -R http:http /volume1/web/hausverwaltung"
+    echo "  (Pfad anpassen, falls eure Installation woanders liegt)"
+    echo ""
+    echo "B) Eigenstaendige Installation aktualisieren:"
+    echo "  sudo rsync -av --exclude 'config/config.php' --exclude 'uploads/' --exclude 'backups/' \\"
+    echo "      ${SYNOPKG_PKGDEST}/app/ /volume1/web/hausverwaltung_neu/"
+    echo "  sudo chown -R http:http /volume1/web/hausverwaltung_neu"
+} > "$SYNOPKG_TEMP_LOGFILE" 2>/dev/null || true
+
+exit 0

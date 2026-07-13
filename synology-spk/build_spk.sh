@@ -80,7 +80,8 @@ cp "$PROJECT_ROOT"EULA.md build/LICENSE
 ( cd build/package && tar -czf ../package.tgz app )
 
 chmod +x build/scripts/preinst build/scripts/postinst build/scripts/preuninst \
-         build/scripts/postuninst build/scripts/start-stop-status
+         build/scripts/postuninst build/scripts/preupgrade build/scripts/postupgrade \
+         build/scripts/start-stop-status
 
 # --owner/--group/--numeric-owner/--mtime erzwingen eine wirklich reine
 # ustar-Datei ohne PAX-Erweiterungsheader - unter Windows/Git-Bash haengt

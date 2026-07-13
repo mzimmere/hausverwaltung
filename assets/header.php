@@ -83,6 +83,13 @@ $currentPage = basename($_SERVER['PHP_SELF']);
 // ------------------------------------------------------------
 $changelog = [
     [
+        'version' => 'v51',
+        'datum'   => 'Juli 2026',
+        'punkte'  => [
+            'Synology-Paket: fehlende "preupgrade"/"postupgrade"-Skripte ergänzt – möglicher Grund, warum "Aktualisieren" im Paket-Zentrum bisher mit "Ungültiges Dateiformat" scheiterte, obwohl Neuinstallationen funktionierten (noch nicht auf echter Hardware bestätigt)',
+        ],
+    ],
+    [
         'version' => 'v50',
         'datum'   => 'Juli 2026',
         'punkte'  => [
