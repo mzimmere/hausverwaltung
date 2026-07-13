@@ -23,6 +23,7 @@ synology-spk/build/package/
 synology-spk/build/package.tgz
 synology-spk/build/LICENSE
 synology-spk/dist/
+synology-spk/test-build/
 
 # Sonstiges
 *.log

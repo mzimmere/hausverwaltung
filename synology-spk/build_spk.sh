@@ -82,7 +82,13 @@ cp "$PROJECT_ROOT"EULA.md build/LICENSE
 chmod +x build/scripts/preinst build/scripts/postinst build/scripts/preuninst \
          build/scripts/postuninst build/scripts/start-stop-status
 
-( cd build && tar --format=ustar -cf ../dist/HausVerwaltung.spk \
+# --owner/--group/--numeric-owner/--mtime erzwingen eine wirklich reine
+# ustar-Datei ohne PAX-Erweiterungsheader - unter Windows/Git-Bash haengt
+# GNU tar sonst wegen des Benutzernamens/der Zeitstempel-Metadaten still
+# PAX-Header an (von Synologys Parser als "Ungueltiges Dateiformat"
+# abgelehnt, obwohl --format=ustar gesetzt war).
+( cd build && tar --format=ustar --owner=0 --group=0 --numeric-owner \
+    --mtime='2026-01-01 00:00:00' -cf ../dist/HausVerwaltung.spk \
     INFO package.tgz scripts conf WIZARD_UIFILES LICENSE PACKAGE_ICON.PNG PACKAGE_ICON_256.PNG )
 
 rm -rf build/package
