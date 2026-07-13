@@ -83,6 +83,13 @@ $currentPage = basename($_SERVER['PHP_SELF']);
 // ------------------------------------------------------------
 $changelog = [
     [
+        'version' => 'v52',
+        'datum'   => 'Juli 2026',
+        'punkte'  => [
+            'Neue SQL-Migrationen werden ab jetzt automatisch angewendet – kein manuelles Einspielen in phpMyAdmin mehr nötig. Behebt auch den Fehler beim Speichern der Abrechnungs-Vorlage (fehlende Spalten wurden nicht automatisch angelegt)',
+        ],
+    ],
+    [
         'version' => 'v51',
         'datum'   => 'Juli 2026',
         'punkte'  => [

@@ -19,3 +19,6 @@ try {
          <p>Bitte prüfen Sie die Datei <code>config/config.php</code>.</p>
          </div>');
 }
+
+require_once __DIR__ . '/../includes/migrationen.php';
+migrationen_ausfuehren($db);
