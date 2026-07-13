@@ -83,6 +83,13 @@ $currentPage = basename($_SERVER['PHP_SELF']);
 // ------------------------------------------------------------
 $changelog = [
     [
+        'version' => 'v53',
+        'datum'   => 'Juli 2026',
+        'punkte'  => [
+            'Synology-Paket: Update-Sync kann jetzt automatisch laufen (kein SSH-Schritt mehr nötig), sobald der Web-Ordner einmalig für die Gruppe "http" freigegeben wurde (Anleitung erscheint nach Installation/Update). Ohne diese Freigabe funktioniert der bisherige manuelle SSH-Sync weiterhin unverändert.',
+        ],
+    ],
+    [
         'version' => 'v52',
         'datum'   => 'Juli 2026',
         'punkte'  => [

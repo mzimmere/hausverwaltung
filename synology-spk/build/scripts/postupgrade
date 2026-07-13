@@ -1,21 +1,39 @@
 #!/bin/sh
-# Gleiche Anleitung wie postinst - nach jedem Update muss der SSH-Sync
-# erneut ausgefuehrt werden, damit die neuen Dateien im Web-Ordner
-# ankommen.
+# Das Paket ist laut conf/privilege ("join-groupname": "http") Mitglied
+# der Gruppe "http" - wenn der Web-Ordner einmalig gruppenschreibbar
+# gemacht wurde (siehe Anleitung im Fehlerfall unten), kann dieses Skript
+# den Sync selbst uebernehmen. Laeuft als eingeschraenkter "package"-Nutzer,
+# nicht root - kein sudo noetig und auch nicht moeglich an dieser Stelle.
+ZIEL="/volume1/web/hausverwaltung"
+QUELLE="${SYNOPKG_PKGDEST}/app/"
+
+if command -v rsync >/dev/null 2>&1 && [ -w "$ZIEL" ]; then
+    rsync -a --exclude 'config/config.php' --exclude 'uploads/' --exclude 'backups/' \
+        "$QUELLE" "$ZIEL/" > "$SYNOPKG_TEMP_LOGFILE" 2>&1
+    if [ $? -eq 0 ]; then
+        echo "" >> "$SYNOPKG_TEMP_LOGFILE"
+        echo "Hausverwaltung wurde automatisch aktualisiert ($ZIEL)." >> "$SYNOPKG_TEMP_LOGFILE"
+        exit 0
+    fi
+fi
+
+# Automatischer Sync nicht moeglich (Rechte fehlen noch oder rsync nicht
+# gefunden) - wie gehabt manuell per SSH, plus einmalige Rechtefreigabe,
+# damit es kuenftig automatisch klappt.
 {
-    echo "Hausverwaltung wurde aktualisiert - Sync-Schritt erneut ausfuehren"
-    echo "(per SSH, siehe Systemsteuerung -> Terminal & SNMP):"
+    echo "Hausverwaltung wurde aktualisiert - automatischer Sync hat nicht"
+    echo "geklappt (Zielordner vermutlich noch nicht freigegeben)."
     echo ""
-    echo "A) Bestehende Installation aktualisieren (empfohlen):"
-    echo "  sudo rsync -av --exclude 'config/config.php' --exclude 'uploads/' --exclude 'backups/' \\"
-    echo "      ${SYNOPKG_PKGDEST}/app/ /volume1/web/hausverwaltung/"
-    echo "  sudo chown -R http:http /volume1/web/hausverwaltung"
-    echo "  (Pfad anpassen, falls eure Installation woanders liegt)"
+    echo "Einmalig per SSH freigeben, danach laeuft der Sync bei jedem"
+    echo "kuenftigen Update automatisch, ohne dass du etwas tun musst:"
+    echo "  sudo chgrp -R http $ZIEL"
+    echo "  sudo chmod -R g+rwX $ZIEL"
+    echo "  sudo find $ZIEL -type d -exec chmod g+s {} \\;"
     echo ""
-    echo "B) Eigenstaendige Installation aktualisieren:"
+    echo "Bis dahin bitte wie gewohnt manuell synchronisieren:"
     echo "  sudo rsync -av --exclude 'config/config.php' --exclude 'uploads/' --exclude 'backups/' \\"
-    echo "      ${SYNOPKG_PKGDEST}/app/ /volume1/web/hausverwaltung_neu/"
-    echo "  sudo chown -R http:http /volume1/web/hausverwaltung_neu"
+    echo "      $QUELLE $ZIEL/"
+    echo "  sudo chown -R http:http $ZIEL"
 } > "$SYNOPKG_TEMP_LOGFILE" 2>/dev/null || true
 
 exit 0
