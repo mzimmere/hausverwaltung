@@ -1,5 +1,5 @@
 package="HausVerwaltung"
-version="55-1"
+version="56-1"
 os_min_ver="7.0-40000"
 arch="noarch"
 displayname="Hausverwaltung"

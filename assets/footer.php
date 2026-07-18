@@ -14,6 +14,8 @@
         &copy; <?= date('Y') ?> Matthias Zimmerer. Alle Rechte vorbehalten.
     </p>
 </footer>
+</div><!-- /app-col -->
+</div><!-- /app-shell -->
 <script src="<?= $basePath ?? '' ?>assets/js/tabellen.js?v=<?= urlencode($appVersion ?? '') ?>"></script>
 </body>
 </html>

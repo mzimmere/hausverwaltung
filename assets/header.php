@@ -83,6 +83,13 @@ $currentPage = basename($_SERVER['PHP_SELF']);
 // ------------------------------------------------------------
 $changelog = [
     [
+        'version' => 'v56',
+        'datum'   => 'Juli 2026',
+        'punkte'  => [
+            'Komplettes Redesign im Google-Material-Design-3-Look: Navigation ist jetzt eine Seitenleiste statt der oberen Icon-Leiste, neues Farb-/Formensystem (Karten, Buttons, Tabellen, Chips) auf jeder Seite, Kosten-Tacho zeigt jetzt einen Fortschrittsring statt Zeiger-Tacho',
+        ],
+    ],
+    [
         'version' => 'v55',
         'datum'   => 'Juli 2026',
         'punkte'  => [
@@ -576,237 +583,98 @@ if (isset($db) && (($user['rolle'] ?? '') === 'hausmeister' || (function_exists(
     <link rel="stylesheet" href="<?= $bp ?>assets/css/style.css?v=<?= urlencode($appVersion) ?>">
     <style>
     /* ============================================================
-       Dunkle Navigationsleiste (Ticketsystem-Stil)
-       Eigene Klassennamen (.topbar…) – kollidiert nicht mit style.css
+       Navigation Drawer + App Bar (Material Design 3)
+       Eigene Klassennamen (.drawer…/.appbar…) – kollidiert nicht mit style.css
        ============================================================ */
-    .topbar {
-        position: sticky;
-        top: 0;
-        z-index: 500;
-        display: flex;
-        align-items: center;
-        gap: 1rem;
-        flex-wrap: wrap;
-        padding: 0.55rem 1.25rem;
-        background: #1a2130;
-        border-bottom: 1px solid rgba(255,255,255,0.07);
-        font-family: inherit;
+    .app-shell { display: flex; min-height: 100vh; }
+
+    .drawer {
+        width: 280px; flex-shrink: 0;
+        background: var(--card-bg);
+        border-right: 1px solid var(--border);
+        display: flex; flex-direction: column;
+        position: sticky; top: 0; height: 100vh; overflow-y: auto;
     }
-    .topbar-brand {
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-        color: #eef1f7;
-        font-weight: 700;
-        font-size: 1.02rem;
-        letter-spacing: 0.01em;
-        white-space: nowrap;
+    .drawer-head { padding: 1.1rem 1.2rem .9rem; }
+    .drawer-brand { display: flex; align-items: center; gap: .6rem; font-weight: 500; font-size: 1.05rem; color: var(--text); }
+    .drawer-brand svg { width: 26px; height: 26px; color: var(--primary); flex-shrink: 0; }
+    .drawer-meta { display: flex; align-items: center; gap: .4rem; flex-wrap: wrap; margin-top: .55rem; }
+    .drawer-version-badge {
+        font-size: .68rem; font-weight: 600; font-family: inherit; color: var(--muted);
+        background: var(--card-bg-high); border: 1px solid var(--border);
+        border-radius: 999px; padding: .12rem .55rem; cursor: pointer;
+        transition: color .15s, border-color .15s;
     }
-    .topbar-badge {
-        font-size: 0.68rem;
-        font-weight: 600;
-        font-family: inherit;
-        color: #aab2c5;
-        background: rgba(255,255,255,0.08);
-        border: 1px solid rgba(255,255,255,0.13);
-        border-radius: 999px;
-        padding: 0.1rem 0.5rem;
-        line-height: 1.4;
-        cursor: pointer;
-        transition: color 0.15s, border-color 0.15s, box-shadow 0.15s;
+    .drawer-version-badge:hover { color: var(--primary); border-color: var(--primary); }
+    .drawer-house {
+        margin-top: .65rem; display: flex; align-items: center; gap: .4rem;
+        background: var(--card-bg-high); border: 1px solid var(--border); border-radius: 12px;
+        padding: .35rem .5rem .35rem .7rem;
     }
-    .topbar-badge:hover {
-        color: #ffffff;
-        border-color: rgba(110,168,255,0.6);
-        box-shadow: 0 0 10px rgba(110,168,255,0.45);
+    .drawer-house-icon { font-size: .9rem; }
+    .drawer-house select {
+        background: transparent; border: none; color: var(--text); font: inherit; font-size: .82rem;
+        font-weight: 500; padding: .1rem; cursor: pointer; outline: none; flex: 1; min-width: 0;
     }
-    .objekt-switch {
-        display: inline-flex;
-        align-items: center;
-        gap: 0.3rem;
-        margin-left: 0.5rem;
-        background: rgba(255,255,255,0.07);
-        border: 1px solid rgba(255,255,255,0.14);
-        border-radius: 8px;
-        padding: 0.1rem 0.4rem 0.1rem 0.55rem;
+    .drawer-house select option { color: #000; }
+    .drawer-house-name { font-size: .82rem; font-weight: 500; color: var(--muted); }
+
+    .drawer-nav { list-style: none; padding: .5rem .75rem 1rem; flex: 1; }
+    .drawer-nav li { margin: 0 0 2px; opacity: 0; animation: drawerItemIn .32s ease-out forwards; }
+    .drawer-item {
+        position: relative; display: flex; align-items: center; gap: .9rem;
+        padding: .6rem .9rem; border-radius: 24px; color: var(--muted);
+        text-decoration: none; font-size: .86rem; font-weight: 500;
+        transition: background .15s, color .15s;
     }
-    .objekt-switch-icon { font-size: 0.85rem; }
-    .objekt-switch select {
-        background: transparent;
-        border: none;
-        color: #eef1f7;
-        font: inherit;
-        font-size: 0.82rem;
-        font-weight: 600;
-        padding: 0.15rem 0.2rem;
-        cursor: pointer;
-        outline: none;
-        max-width: 200px;
-    }
-    .objekt-switch select option { color: #1a2130; }
-    .objekt-single {
-        margin-left: 0.5rem;
-        font-size: 0.82rem;
-        font-weight: 500;
-        color: #aab2c5;
-    }
-    .topbar-nav {
-        display: flex;
-        align-items: center;
-        gap: 0.15rem;
-        flex-wrap: wrap;
-        margin-left: auto;
-        list-style: none;
-        padding: 0;
-    }
-    .topbar-nav li { margin: 0; }
-    button.nav-icon {
-        background: none;
-        border: none;
-        padding: 0;
-        cursor: pointer;
-        font: inherit;
-    }
-    .nav-icon {
-        position: relative;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        width: 36px;
-        height: 34px;
-        border-radius: 8px;
-        color: #98a1b6;
-        transition: color 0.15s, background 0.15s;
-    }
-    .nav-icon svg {
-        width: 19px;
-        height: 19px;
-        fill: none;
-        stroke: currentColor;
-        stroke-width: 1.7;
-        stroke-linecap: round;
-        stroke-linejoin: round;
-    }
-    .nav-icon:hover {
-        color: #9cc2ff;
-        background: rgba(110,168,255,0.10);
-        box-shadow: 0 0 12px rgba(110,168,255,0.55), 0 0 26px rgba(110,168,255,0.22);
-    }
-    .nav-icon:hover svg {
-        filter: drop-shadow(0 0 5px rgba(110,168,255,0.9));
-    }
-    .nav-icon.active {
-        color: #6ea8ff;
-        background: rgba(110,168,255,0.13);
-    }
+    .drawer-item svg { width: 20px; height: 20px; flex-shrink: 0; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+    .drawer-item span.label { flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .drawer-item:hover { background: var(--card-bg-high); color: var(--text); }
+    .drawer-item.active { background: var(--primary-container); color: var(--on-primary-container); font-weight: 600; }
+    .drawer-item-gold { color: #8a6300; }
+    :root[data-theme="dark"] .drawer-item-gold { color: #ffb95c; }
+    .drawer-item-gold:hover { background: var(--accent-container); color: var(--accent); }
+    .drawer-item-gold.active { background: var(--accent-container); color: var(--accent); }
     .nav-count {
-        position: absolute;
-        top: 1px;
-        right: 1px;
-        min-width: 15px;
-        height: 15px;
-        padding: 0 4px;
-        background: #e05252;
-        color: #fff;
-        font-size: 0.62rem;
-        font-weight: 700;
-        line-height: 15px;
-        text-align: center;
-        border-radius: 999px;
-        box-shadow: 0 0 6px rgba(224,82,82,0.6);
+        min-width: 18px; height: 18px; padding: 0 5px; background: var(--danger); color: #fff;
+        font-size: .66rem; font-weight: 700; line-height: 18px; text-align: center; border-radius: 999px; flex-shrink: 0;
     }
-    /* Eigentümer-Bereich behält die goldene Kennzeichnung */
-    .nav-icon-gold { color: #d9b96a; }
-    .nav-icon-gold:hover {
-        color: #ffd97a;
-        background: rgba(255,217,122,0.10);
-        box-shadow: 0 0 12px rgba(255,217,122,0.5), 0 0 26px rgba(255,217,122,0.2);
-    }
-    .nav-icon-gold:hover svg {
-        filter: drop-shadow(0 0 5px rgba(255,217,122,0.9));
-    }
-    .nav-icon-gold.active { color: #ffd97a; background: rgba(255,217,122,0.14); }
 
-    /* Aufbau-Animation beim Laden der Seite */
-    @keyframes topbarItemIn {
-        from { opacity: 0; transform: translateY(-9px); }
-        to   { opacity: 1; transform: translateY(0); }
-    }
-    .topbar-brand, .topbar-nav li, .topbar-sep, .topbar-user {
-        opacity: 0;
-        animation: topbarItemIn 0.38s ease-out forwards;
-    }
-    .topbar-brand { animation-delay: 0ms; }
+    @keyframes drawerItemIn { from { opacity: 0; transform: translateX(-6px); } to { opacity: 1; transform: translateX(0); } }
     @media (prefers-reduced-motion: reduce) {
-        .topbar-brand, .topbar-nav li, .topbar-sep, .topbar-user {
-            opacity: 1;
-            animation: none;
-        }
-        .nav-icon, .topbar-badge { transition: none; }
+        .drawer-nav li { opacity: 1; animation: none; }
+        .drawer-item, .drawer-version-badge { transition: none; }
     }
 
-    /* Tooltip unter dem Icon */
-    .nav-icon::after {
-        content: attr(data-tip);
-        position: absolute;
-        top: calc(100% + 7px);
-        left: 50%;
-        transform: translateX(-50%) translateY(-3px);
-        background: #0d1220;
-        color: #e7eaf2;
-        font-size: 0.72rem;
-        font-weight: 500;
-        white-space: nowrap;
-        padding: 0.28rem 0.55rem;
-        border-radius: 6px;
-        border: 1px solid rgba(255,255,255,0.10);
-        box-shadow: 0 4px 14px rgba(0,0,0,0.35);
-        opacity: 0;
-        pointer-events: none;
-        transition: opacity 0.12s, transform 0.12s;
+    .drawer-foot { padding: .8rem 1.2rem 1.1rem; border-top: 1px solid var(--border); display: flex; align-items: center; gap: .6rem; }
+    .drawer-avatar {
+        width: 34px; height: 34px; border-radius: 999px; background: var(--primary); color: var(--on-primary);
+        display: flex; align-items: center; justify-content: center; font-size: .78rem; font-weight: 600; flex-shrink: 0;
     }
-    .nav-icon:hover::after {
-        opacity: 1;
-        transform: translateX(-50%) translateY(0);
-    }
+    .drawer-user { min-width: 0; flex: 1; }
+    .drawer-user-name { display: block; font-size: .82rem; font-weight: 500; color: var(--text); text-decoration: none; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .drawer-user-name:hover { color: var(--primary); }
+    .drawer-logout { font-size: .76rem; color: var(--muted); text-decoration: none; }
+    .drawer-logout:hover { color: var(--danger); }
 
-    .topbar-sep {
-        width: 1px;
-        height: 22px;
-        background: rgba(255,255,255,0.14);
-        margin: 0 0.35rem;
+    /* App Bar */
+    .app-col { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+    .appbar {
+        height: 60px; flex-shrink: 0; display: flex; align-items: center; gap: .75rem;
+        padding: 0 1.5rem; background: var(--bg); border-bottom: 1px solid var(--border);
+        position: sticky; top: 0; z-index: 50;
     }
-    .topbar-user {
-        display: flex;
-        align-items: center;
-        gap: 0.65rem;
-        white-space: nowrap;
+    .appbar-title { font-size: 1.1rem; font-weight: 500; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .appbar-spacer { flex: 1; }
+    .appbar-icon-btn {
+        width: 38px; height: 38px; border-radius: 999px; border: none; background: none; cursor: pointer;
+        display: flex; align-items: center; justify-content: center; color: var(--muted); transition: background .15s, color .15s; flex-shrink: 0;
     }
-    .topbar-user svg {
-        width: 18px;
-        height: 18px;
-        fill: none;
-        stroke: #98a1b6;
-        stroke-width: 1.7;
-        stroke-linecap: round;
-        stroke-linejoin: round;
-    }
-    .topbar-user-name {
-        color: #dfe3ec;
-        font-size: 0.86rem;
-        font-weight: 500;
-    }
-    .topbar-user-name:hover { color: #ffffff; }
-    .topbar-logout {
-        color: #7c86a0;
-        font-size: 0.86rem;
-        text-decoration: none;
-        transition: color 0.15s;
-    }
-    .topbar-logout:hover { color: #ff8b8b; }
-    a.topbar-user-name { text-decoration: none; }
+    .appbar-icon-btn:hover { background: var(--card-bg-high); color: var(--text); }
+    .appbar-icon-btn svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+    .appbar-menu-btn { display: none; }
 
-    /* Changelog-Popup */
+    /* Changelog-Popup (M3 Dialog) */
     .changelog-overlay {
         position: fixed;
         inset: 0;
@@ -815,7 +683,7 @@ if (isset($db) && (($user['rolle'] ?? '') === 'hausmeister' || (function_exists(
         align-items: flex-start;
         justify-content: center;
         padding: 9vh 1rem 2rem;
-        background: rgba(8,11,20,0.62);
+        background: rgba(0,0,0,.4);
         backdrop-filter: blur(2px);
     }
     .changelog-overlay.open { display: flex; }
@@ -824,41 +692,40 @@ if (isset($db) && (($user['rolle'] ?? '') === 'hausmeister' || (function_exists(
         max-width: 520px;
         max-height: 74vh;
         overflow-y: auto;
-        background: #1a2130;
-        color: #dfe3ec;
-        border: 1px solid rgba(255,255,255,0.10);
-        border-radius: 12px;
-        box-shadow: 0 18px 50px rgba(0,0,0,0.55), 0 0 24px rgba(110,168,255,0.10);
-        animation: topbarItemIn 0.22s ease-out;
+        background: var(--card-bg);
+        color: var(--text);
+        border-radius: 28px;
+        box-shadow: 0 8px 28px rgba(0,0,0,.3);
+        animation: changelogIn .18s ease-out;
     }
+    @keyframes changelogIn { from { opacity: 0; transform: translateY(-6px); } }
     .changelog-head {
         display: flex;
         align-items: center;
         justify-content: space-between;
-        padding: 0.9rem 1.2rem;
-        border-bottom: 1px solid rgba(255,255,255,0.08);
+        padding: 1.2rem 1.4rem .8rem;
         position: sticky;
         top: 0;
-        background: #1a2130;
+        background: var(--card-bg);
     }
     .changelog-head h2 {
         margin: 0;
-        font-size: 1rem;
-        font-weight: 700;
-        color: #eef1f7;
+        font-size: 1.1rem;
+        font-weight: 500;
+        color: var(--text);
     }
     .changelog-close {
         background: none;
         border: none;
-        color: #98a1b6;
+        color: var(--muted);
         font-size: 1.3rem;
         line-height: 1;
         cursor: pointer;
-        padding: 0.2rem 0.4rem;
-        border-radius: 6px;
+        padding: 0.2rem 0.5rem;
+        border-radius: 999px;
     }
-    .changelog-close:hover { color: #ffffff; background: rgba(255,255,255,0.08); }
-    .changelog-body { padding: 0.9rem 1.2rem 1.2rem; }
+    .changelog-close:hover { color: var(--text); background: var(--card-bg-high); }
+    .changelog-body { padding: .4rem 1.4rem 1.4rem; }
     .changelog-entry { margin-bottom: 1.1rem; }
     .changelog-entry:last-child { margin-bottom: 0; }
     .changelog-version {
@@ -870,72 +737,70 @@ if (isset($db) && (($user['rolle'] ?? '') === 'hausmeister' || (function_exists(
     .changelog-version .cl-badge {
         font-size: 0.7rem;
         font-weight: 700;
-        color: #6ea8ff;
-        background: rgba(110,168,255,0.13);
-        border: 1px solid rgba(110,168,255,0.35);
+        color: var(--primary);
+        background: var(--primary-container);
         border-radius: 999px;
-        padding: 0.08rem 0.55rem;
+        padding: 0.08rem 0.6rem;
     }
-    .changelog-version .cl-datum { font-size: 0.76rem; color: #7c86a0; }
+    .changelog-version .cl-datum { font-size: 0.76rem; color: var(--muted); }
     .changelog-entry ul {
         margin: 0;
         padding-left: 1.15rem;
         font-size: 0.85rem;
         line-height: 1.55;
-        color: #c4cad8;
+        color: var(--muted);
     }
 
     @media (max-width: 900px) {
-        .topbar { padding: 0.5rem 0.75rem; gap: 0.5rem; }
-        .topbar-nav { margin-left: 0; width: 100%; order: 3; }
-        .topbar-user { margin-left: auto; }
-        .topbar-user-name { display: none; }
+        .drawer {
+            position: fixed; left: 0; top: 0; z-index: 400;
+            transform: translateX(-100%); transition: transform .2s;
+            box-shadow: 0 0 30px rgba(0,0,0,.35);
+        }
+        .drawer.open { transform: translateX(0); }
+        .appbar-menu-btn { display: flex; }
     }
     </style>
 </head>
 <body>
-<nav class="topbar">
-    <div class="topbar-brand">
-        <?= htmlspecialchars(APP_NAME) ?>
-        <button type="button" class="topbar-badge" id="changelogBadge"
-                title="Changelog anzeigen" aria-haspopup="dialog"><?= htmlspecialchars($appVersion) ?></button>
-        <?php if ($updateVerfuegbar): ?>
-        <span class="badge badge-warning" style="margin-left:.4rem;cursor:default"
-              title="<?= htmlspecialchars($updateVerfuegbar['hinweis'] ?? '') ?>">
-            Update <?= htmlspecialchars($updateVerfuegbar['version']) ?> verfügbar
-        </span>
-        <?php endif; ?>
+<div class="app-shell">
+<nav class="drawer" id="drawer">
+    <div class="drawer-head">
+        <div class="drawer-brand">
+            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 3 2 11h3v9h5v-6h4v6h5v-9h3z"/></svg>
+            <?= htmlspecialchars(APP_NAME) ?>
+        </div>
+        <div class="drawer-meta">
+            <button type="button" class="drawer-version-badge" id="changelogBadge"
+                    title="Changelog anzeigen" aria-haspopup="dialog"><?= htmlspecialchars($appVersion) ?></button>
+            <?php if ($updateVerfuegbar): ?>
+            <span class="badge badge-warning" title="<?= htmlspecialchars($updateVerfuegbar['hinweis'] ?? '') ?>">Update <?= htmlspecialchars($updateVerfuegbar['version']) ?></span>
+            <?php endif; ?>
+        </div>
         <?php if (istAdmin() && count($objektListe) > 1): ?>
-        <span class="objekt-switch">
-            <span class="objekt-switch-icon" aria-hidden="true">🏠</span>
+        <div class="drawer-house">
+            <span class="drawer-house-icon" aria-hidden="true">🏠</span>
             <select onchange="if(this.value)window.location='?objekt_wechsel='+this.value" aria-label="Immobilie wechseln">
                 <?php foreach ($objektListe as $o): ?>
                 <option value="<?= $o['id'] ?>"<?= (int)$o['id'] === aktivesObjekt() ? ' selected' : '' ?>><?= htmlspecialchars($o['name']) ?></option>
                 <?php endforeach; ?>
             </select>
-        </span>
+        </div>
         <?php elseif ($aktObjekt): ?>
-        <span class="objekt-single" title="Aktuelle Immobilie">🏠 <?= htmlspecialchars($aktObjekt['name']) ?></span>
+        <div class="drawer-house"><span class="drawer-house-icon" aria-hidden="true">🏠</span><span class="drawer-house-name"><?= htmlspecialchars($aktObjekt['name']) ?></span></div>
         <?php endif; ?>
     </div>
-    <ul class="topbar-nav">
-        <li style="animation-delay: 30ms">
-            <button type="button" class="nav-icon" id="themeToggle"
-                    data-tip="Hell / Dunkel" aria-label="Farbschema umschalten">
-                <svg id="themeIconMoon" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3 7 7 0 0 0 21 12.8Z"/></svg>
-                <svg id="themeIconSun" viewBox="0 0 24 24" aria-hidden="true" style="display:none"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
-            </button>
-        </li>
-        <li style="animation-delay: 45ms"><div class="topbar-sep" style="animation: none; opacity: 1"></div></li>
+    <ul class="drawer-nav">
         <?php foreach ($navItems as $i => [$file, $label, $icon, $extra]):
             $href   = $file === 'index.php' ? $bp . 'index.php' : $bp . 'pages/' . $file;
             $active = $currentPage === $file ? ' active' : '';
+            $goldClass = $extra === 'nav-icon-gold' ? ' drawer-item-gold' : '';
         ?>
-        <li style="animation-delay: <?= 60 + $i * 35 ?>ms">
-            <a href="<?= $href ?>" class="nav-icon<?= $extra ? ' ' . $extra : '' ?><?= $active ?>"
-               data-nav="<?= htmlspecialchars($file) ?>"
-               data-tip="<?= htmlspecialchars($label) ?>" aria-label="<?= htmlspecialchars($label) ?>">
+        <li style="animation-delay: <?= $i * 20 ?>ms">
+            <a href="<?= $href ?>" class="drawer-item<?= $goldClass ?><?= $active ?>"
+               data-nav="<?= htmlspecialchars($file) ?>" aria-label="<?= htmlspecialchars($label) ?>">
                 <svg viewBox="0 0 24 24" aria-hidden="true"><?= $icon ?></svg>
+                <span class="label"><?= htmlspecialchars($label) ?></span>
                 <?php if ($file === 'freigabe.php' && $offeneEinreichungen > 0): ?>
                 <span class="nav-count"><?= $offeneEinreichungen ?></span>
                 <?php elseif ($file === 'wartung.php' && $offeneAufgaben > 0): ?>
@@ -947,13 +812,32 @@ if (isset($db) && (($user['rolle'] ?? '') === 'hausmeister' || (function_exists(
         </li>
         <?php endforeach; ?>
     </ul>
-    <div class="topbar-sep" style="animation-delay: <?= 60 + count($navItems) * 35 ?>ms"></div>
-    <div class="topbar-user" style="animation-delay: <?= 100 + count($navItems) * 35 ?>ms">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M5 21c0-3.9 3.1-6 7-6s7 2.1 7 6"/></svg>
-        <a href="<?= $bp ?>pages/passwort.php" class="topbar-user-name" title="Konto verwalten"><?= htmlspecialchars($user['name']) ?></a>
-        <a href="<?= $bp ?>logout.php" class="topbar-logout">Abmelden</a>
+    <div class="drawer-foot">
+        <div class="drawer-avatar"><?= htmlspecialchars(mb_strtoupper(mb_substr($user['name'] ?? '?', 0, 1))) ?></div>
+        <div class="drawer-user">
+            <a href="<?= $bp ?>pages/passwort.php" class="drawer-user-name" title="Konto verwalten"><?= htmlspecialchars($user['name']) ?></a>
+            <a href="<?= $bp ?>logout.php" class="drawer-logout">Abmelden</a>
+        </div>
     </div>
 </nav>
+<div class="app-col">
+<header class="appbar">
+    <button type="button" class="appbar-icon-btn appbar-menu-btn" id="drawerToggle" aria-label="Menü">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+    </button>
+    <?php
+    $aktivLabel = APP_NAME;
+    foreach ($navItems as [$navFile, $navLabel]) {
+        if ($navFile === $currentPage) { $aktivLabel = $navLabel; break; }
+    }
+    ?>
+    <span class="appbar-title"><?= htmlspecialchars($aktivLabel) ?></span>
+    <span class="appbar-spacer"></span>
+    <button type="button" class="appbar-icon-btn" id="themeToggle" aria-label="Farbschema umschalten" title="Hell / Dunkel">
+        <svg id="themeIconMoon" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3 7 7 0 0 0 21 12.8Z"/></svg>
+        <svg id="themeIconSun" viewBox="0 0 24 24" aria-hidden="true" style="display:none"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+    </button>
+</header>
 
 <!-- Changelog-Popup -->
 <div class="changelog-overlay" id="changelogOverlay" role="dialog" aria-modal="true" aria-labelledby="changelogTitle">
@@ -992,6 +876,19 @@ if (isset($db) && (($user['rolle'] ?? '') === 'hausmeister' || (function_exists(
     overlay.addEventListener('click', function (e) { if (e.target === overlay) hide(); });
     document.addEventListener('keydown', function (e) {
         if (e.key === 'Escape' && overlay.classList.contains('open')) hide();
+    });
+})();
+
+// Mobile: Navigation Drawer per Menü-Button ein-/ausblenden
+(function () {
+    var toggle = document.getElementById('drawerToggle');
+    var drawer = document.getElementById('drawer');
+    if (!toggle || !drawer) return;
+    toggle.addEventListener('click', function () { drawer.classList.toggle('open'); });
+    document.addEventListener('click', function (e) {
+        if (drawer.classList.contains('open') && !drawer.contains(e.target) && e.target !== toggle && !toggle.contains(e.target)) {
+            drawer.classList.remove('open');
+        }
     });
 })();
 
