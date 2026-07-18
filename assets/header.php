@@ -83,6 +83,13 @@ $currentPage = basename($_SERVER['PHP_SELF']);
 // ------------------------------------------------------------
 $changelog = [
     [
+        'version' => 'v57',
+        'datum'   => 'Juli 2026',
+        'punkte'  => [
+            'Navigationsleiste: Konto/Abmelden-Bereich bleibt jetzt fest unten stehen, nur die Menüpunkte darüber scrollen bei vielen Einträgen',
+        ],
+    ],
+    [
         'version' => 'v56',
         'datum'   => 'Juli 2026',
         'punkte'  => [
@@ -593,9 +600,9 @@ if (isset($db) && (($user['rolle'] ?? '') === 'hausmeister' || (function_exists(
         background: var(--card-bg);
         border-right: 1px solid var(--border);
         display: flex; flex-direction: column;
-        position: sticky; top: 0; height: 100vh; overflow-y: auto;
+        position: sticky; top: 0; height: 100vh;
     }
-    .drawer-head { padding: 1.1rem 1.2rem .9rem; }
+    .drawer-head { padding: 1.1rem 1.2rem .9rem; flex-shrink: 0; }
     .drawer-brand { display: flex; align-items: center; gap: .6rem; font-weight: 500; font-size: 1.05rem; color: var(--text); }
     .drawer-brand svg { width: 26px; height: 26px; color: var(--primary); flex-shrink: 0; }
     .drawer-meta { display: flex; align-items: center; gap: .4rem; flex-wrap: wrap; margin-top: .55rem; }
@@ -619,7 +626,7 @@ if (isset($db) && (($user['rolle'] ?? '') === 'hausmeister' || (function_exists(
     .drawer-house select option { color: #000; }
     .drawer-house-name { font-size: .82rem; font-weight: 500; color: var(--muted); }
 
-    .drawer-nav { list-style: none; padding: .5rem .75rem 1rem; flex: 1; }
+    .drawer-nav { list-style: none; padding: .5rem .75rem 1rem; flex: 1; min-height: 0; overflow-y: auto; }
     .drawer-nav li { margin: 0 0 2px; opacity: 0; animation: drawerItemIn .32s ease-out forwards; }
     .drawer-item {
         position: relative; display: flex; align-items: center; gap: .9rem;
@@ -646,7 +653,7 @@ if (isset($db) && (($user['rolle'] ?? '') === 'hausmeister' || (function_exists(
         .drawer-item, .drawer-version-badge { transition: none; }
     }
 
-    .drawer-foot { padding: .8rem 1.2rem 1.1rem; border-top: 1px solid var(--border); display: flex; align-items: center; gap: .6rem; }
+    .drawer-foot { padding: .8rem 1.2rem 1.1rem; border-top: 1px solid var(--border); display: flex; align-items: center; gap: .6rem; flex-shrink: 0; }
     .drawer-avatar {
         width: 34px; height: 34px; border-radius: 999px; background: var(--primary); color: var(--on-primary);
         display: flex; align-items: center; justify-content: center; font-size: .78rem; font-weight: 600; flex-shrink: 0;
