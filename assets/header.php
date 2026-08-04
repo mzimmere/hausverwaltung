@@ -83,6 +83,13 @@ $currentPage = basename($_SERVER['PHP_SELF']);
 // ------------------------------------------------------------
 $changelog = [
     [
+        'version' => 'v58',
+        'datum'   => 'Juli 2026',
+        'punkte'  => [
+            'Rechnungen: schlecht lesbare, noch nicht ans neue Design angepasste Hinweisboxen (u.a. "Wie soll diese Rechnung zugeordnet werden?") auf die Material-Farbvariablen umgestellt – jetzt auch im Dunkelmodus gut lesbar',
+        ],
+    ],
+    [
         'version' => 'v57',
         'datum'   => 'Juli 2026',
         'punkte'  => [

@@ -180,7 +180,7 @@ include '../assets/header.php';
     <h1>Rechnungen</h1>
     <div>
         <?php foreach ([date('Y')-1, date('Y'), date('Y')+1] as $j): ?>
-        <a href="?jahr=<?= $j ?>" class="btn btn-sm <?= $j==$filterJahr ? 'btn-primary' : '' ?>" style="<?= $j!=$filterJahr ? 'background:#e2e8f0;color:#333' : '' ?>"><?= $j ?></a>
+        <a href="?jahr=<?= $j ?>" class="btn btn-sm <?= $j==$filterJahr ? 'btn-primary' : '' ?>" style="<?= $j!=$filterJahr ? 'background:var(--card-bg-high);color:var(--text)' : '' ?>"><?= $j ?></a>
         <?php endforeach; ?>
     </div>
 </div>
@@ -224,8 +224,8 @@ include '../assets/header.php';
         </div>
 
         <!-- ── Zuordnung wählen ── -->
-        <div style="margin-top:1.25rem;padding:1rem;background:#fff8f0;border:1px solid #e8a020;border-radius:8px">
-            <label style="color:#c07010;display:block;margin-bottom:.6rem">Wie soll diese Rechnung zugeordnet werden?</label>
+        <div style="margin-top:1.25rem;padding:1rem;background:var(--accent-container);border:1px solid var(--accent);border-radius:12px">
+            <label style="color:var(--accent);display:block;margin-bottom:.6rem">Wie soll diese Rechnung zugeordnet werden?</label>
 
             <div style="display:flex;gap:1.5rem;flex-wrap:wrap;margin-bottom:1rem">
                 <label style="display:flex;align-items:center;gap:.4rem;font-weight:400;cursor:pointer">
@@ -250,7 +250,7 @@ include '../assets/header.php';
                         <?php endforeach; ?>
                     </select>
                 </div>
-                <p style="margin-top:.5rem;color:#856404;font-size:.85rem">
+                <p style="margin-top:.5rem;color:var(--muted);font-size:.85rem">
                     Beispiel: eigener Grundsteuerbescheid pro Wohnung. Die Kosten werden
                     <strong>ausschließlich dieser Wohnung</strong> berechnet.
                 </p>
@@ -258,7 +258,7 @@ include '../assets/header.php';
 
             <!-- Modus: Mehrere Wohnungen -->
             <div id="modus-gruppe" style="display:none">
-                <p style="margin-bottom:.6rem;color:#856404;font-size:.85rem">
+                <p style="margin-bottom:.6rem;color:var(--muted);font-size:.85rem">
                     Beispiel: Hausmeister/Treppenhausreinigung nur für EG und OG, nicht DG.
                 </p>
 
@@ -273,7 +273,7 @@ include '../assets/header.php';
                     </label>
                 </div>
 
-                <p id="hinweis-volle-summe" style="display:none;margin-bottom:.6rem;color:#856404;font-size:.85rem;background:#fff3cd;padding:.5rem .75rem;border-radius:6px">
+                <p id="hinweis-volle-summe" style="display:none;margin-bottom:.6rem;color:var(--accent);font-size:.85rem;background:var(--accent-container);padding:.5rem .75rem;border-radius:6px">
                     Beispiel: 600 € eingetragen, EG + OG angekreuzt → EG bekommt 600 €
                     <strong>und</strong> OG bekommt ebenfalls 600 € (insgesamt 1.200 € Kosten im Haus).
                 </p>
@@ -293,7 +293,7 @@ include '../assets/header.php';
                     </tr>
                     <?php endforeach; ?>
                 </table>
-                <button type="button" id="btn-gleich-verteilen" class="btn btn-sm" style="background:#e2e8f0;margin-top:.5rem" onclick="gleichVerteilen()">Gleich verteilen (auf angehakte Wohnungen)</button>
+                <button type="button" id="btn-gleich-verteilen" class="btn btn-sm" style="background:var(--card-bg-high);color:var(--text);margin-top:.5rem" onclick="gleichVerteilen()">Gleich verteilen (auf angehakte Wohnungen)</button>
             </div>
         </div>
 
@@ -310,7 +310,7 @@ include '../assets/header.php';
             </p>
 
             <div id="positionenListe"></div>
-            <button type="button" class="btn btn-sm" style="background:#e2e8f0" onclick="positionHinzufuegen()">+ Zusätzliche Position</button>
+            <button type="button" class="btn btn-sm" style="background:var(--card-bg-high);color:var(--text)" onclick="positionHinzufuegen()">+ Zusätzliche Position</button>
         </div>
 
         <div style="margin-top:1rem">
@@ -423,7 +423,7 @@ function positionTypAendern(select) {
             </td>
             <td><?= htmlspecialchars($r['beschreibung']) ?></td>
             <td class="text-right"><?= number_format($r['betrag'],2,',','.') ?> &euro;</td>
-            <td><?php if ($r['dateiname']): ?><a href="datei.php?typ=rechnung&id=<?= $r['id'] ?>" target="_blank" class="btn btn-sm" style="background:#e2e8f0">📄</a><?php endif; ?></td>
+            <td><?php if ($r['dateiname']): ?><a href="datei.php?typ=rechnung&id=<?= $r['id'] ?>" target="_blank" class="btn btn-sm" style="background:var(--card-bg-high);color:var(--text)">📄</a><?php endif; ?></td>
             <td><?php if (!istNurLesend()): ?><form method="post" style="display:inline" onsubmit="return confirm('L&ouml;schen?')"><?= csrfFeld() ?><input type="hidden" name="delete_id" value="<?= $r['id'] ?>"><input type="hidden" name="jahr" value="<?= $filterJahr ?>"><button type="submit" class="btn btn-sm btn-danger">✕</button></form><?php endif; ?></td>
         </tr>
         <?php endforeach; ?>
