@@ -64,9 +64,9 @@ include '../assets/header.php';
 
     <?php if ($bereiche): ?>
     <div class="btn-group" style="margin-bottom:1rem;flex-wrap:wrap">
-        <a href="audit.php" class="btn btn-sm <?= $bereichFilter === '' ? 'btn-primary' : '' ?>" style="<?= $bereichFilter !== '' ? 'background:#e2e8f0;color:#333' : '' ?>">Alle</a>
+        <a href="audit.php" class="btn btn-sm <?= $bereichFilter === '' ? 'btn-primary' : '' ?>" style="<?= $bereichFilter !== '' ? 'background:var(--card-bg-high);color:var(--text)' : '' ?>">Alle</a>
         <?php foreach ($bereiche as $b): ?>
-        <a href="?bereich=<?= urlencode($b) ?>" class="btn btn-sm <?= $bereichFilter === $b ? 'btn-primary' : '' ?>" style="<?= $bereichFilter !== $b ? 'background:#e2e8f0;color:#333' : '' ?>"><?= htmlspecialchars($b) ?></a>
+        <a href="?bereich=<?= urlencode($b) ?>" class="btn btn-sm <?= $bereichFilter === $b ? 'btn-primary' : '' ?>" style="<?= $bereichFilter !== $b ? 'background:var(--card-bg-high);color:var(--text)' : '' ?>"><?= htmlspecialchars($b) ?></a>
         <?php endforeach; ?>
     </div>
     <?php endif; ?>

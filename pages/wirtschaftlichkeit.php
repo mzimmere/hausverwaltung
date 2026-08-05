@@ -131,7 +131,7 @@ include '../assets/header.php';
     <div>
         <?php foreach ([date('Y')-2, date('Y')-1, date('Y')] as $j): ?>
         <a href="?jahr=<?= $j ?>" class="btn btn-sm <?= $j==$filterJahr ? 'btn-primary' : '' ?>"
-           style="<?= $j!=$filterJahr ? 'background:#e2e8f0;color:#333' : '' ?>"><?= $j ?></a>
+           style="<?= $j!=$filterJahr ? 'background:var(--card-bg-high);color:var(--text)' : '' ?>"><?= $j ?></a>
         <?php endforeach; ?>
     </div>
 </div>
@@ -174,7 +174,7 @@ include '../assets/header.php';
             <td>Nicht umlegbare Kosten (Instandhaltung, Verwaltung, Zinsen ...)</td>
             <td class="text-right" style="color:var(--danger)">− <?= number_format($summeEigKosten,2,',','.') ?> €</td>
         </tr>
-        <tr style="font-weight:700;background:#f0f5fb;border-top:2px solid var(--primary)">
+        <tr style="font-weight:700;background:var(--card-bg-high);border-top:2px solid var(--primary)">
             <td>Ihr wirtschaftliches Ergebnis (vor Steuern)</td>
             <td class="text-right <?= $ergebnisVorUmlage >= 0 ? 'negativ' : 'positiv' ?>">
                 <?= number_format($ergebnisVorUmlage,2,',','.') ?> €
@@ -201,15 +201,15 @@ include '../assets/header.php';
         und werden bewusst separat ausgewiesen.
     </p>
     <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;margin-bottom:1rem">
-        <div style="text-align:center;padding:1rem;background:#f8fafc;border-radius:8px">
+        <div style="text-align:center;padding:1rem;background:var(--card-bg-high);border-radius:8px">
             <div style="font-size:.8rem;color:var(--muted);text-transform:uppercase">Erhaltene Nachzahlungen</div>
             <div style="font-size:1.4rem;font-weight:700;color:var(--text)"><?= number_format($summeNkNachzahlung,2,',','.') ?> €</div>
         </div>
-        <div style="text-align:center;padding:1rem;background:#f8fafc;border-radius:8px">
+        <div style="text-align:center;padding:1rem;background:var(--card-bg-high);border-radius:8px">
             <div style="font-size:.8rem;color:var(--muted);text-transform:uppercase">Gezahlte Erstattungen</div>
             <div style="font-size:1.4rem;font-weight:700;color:var(--text)"><?= number_format($summeNkErstattung,2,',','.') ?> €</div>
         </div>
-        <div style="text-align:center;padding:1rem;background:#f8fafc;border-radius:8px">
+        <div style="text-align:center;padding:1rem;background:var(--card-bg-high);border-radius:8px">
             <div style="font-size:.8rem;color:var(--muted);text-transform:uppercase">Saldo (Durchlaufposten)</div>
             <div style="font-size:1.4rem;font-weight:700;color:var(--text)"><?= number_format($nkSaldoNetto,2,',','.') ?> €</div>
         </div>
@@ -233,7 +233,7 @@ include '../assets/header.php';
     <p style="color:var(--muted)">Noch keine NK-Zahlungen für <?= $filterJahr ?> erfasst.</p>
     <?php endif; ?>
     <div style="margin-top:.75rem">
-        <a href="nk_zahlungen.php?jahr=<?= $filterJahr ?>" class="btn btn-sm" style="background:#718096;color:#fff">NK-Zahlungen erfassen →</a>
+        <a href="nk_zahlungen.php?jahr=<?= $filterJahr ?>" class="btn btn-sm" style="background:var(--primary);color:var(--on-primary)">NK-Zahlungen erfassen →</a>
     </div>
 </div>
 
@@ -341,7 +341,7 @@ include '../assets/header.php';
             <td><span class="badge badge-warning"><?= htmlspecialchars($e['kategorie']) ?></span></td>
             <td><?= htmlspecialchars($e['beschreibung']) ?></td>
             <td class="text-right" style="color:var(--danger)"><?= number_format($e['betrag'],2,',','.') ?> €</td>
-            <td><?php if ($e['dateiname']): ?><a href="../uploads/eigentuemerkosten/<?= $e['jahr'].'/'.$e['dateiname'] ?>" target="_blank" class="btn btn-sm" style="background:#e2e8f0">📄</a><?php endif; ?></td>
+            <td><?php if ($e['dateiname']): ?><a href="../uploads/eigentuemerkosten/<?= $e['jahr'].'/'.$e['dateiname'] ?>" target="_blank" class="btn btn-sm" style="background:var(--card-bg-high);color:var(--text)">📄</a><?php endif; ?></td>
             <?php if (!istNurLesend()): ?>
             <td><a href="?delete_kosten=<?= $e['id'] ?>&jahr=<?= $filterJahr ?>" class="btn btn-sm btn-danger" onclick="return confirm('Löschen?')">✕</a></td>
             <?php endif; ?>

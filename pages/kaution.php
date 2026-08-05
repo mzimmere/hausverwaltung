@@ -221,21 +221,21 @@ include '../assets/header.php';
                 <td style="width:120px"><input type="text" name="einbehalt_betrag[]" placeholder="€" style="width:100px;padding:.4rem"></td>
             </tr>
         </table>
-        <button type="button" class="btn btn-sm" style="background:#e2e8f0;margin-bottom:1rem" onclick="zeileHinzufuegen()">+ Weitere Position</button>
+        <button type="button" class="btn btn-sm" style="background:var(--card-bg-high);color:var(--text);margin-bottom:1rem" onclick="zeileHinzufuegen()">+ Weitere Position</button>
 
         <div class="form-group" style="max-width:480px;margin-bottom:1.25rem">
             <label>Notiz</label>
             <input type="text" name="notiz" placeholder="Optionale Notiz zur Abrechnung">
         </div>
 
-        <div id="vorschauErgebnis" style="padding:1rem;background:#f8fafc;border-radius:8px;margin-bottom:1.25rem;font-size:.95rem">
+        <div id="vorschauErgebnis" style="padding:1rem;background:var(--card-bg-high);border-radius:12px;margin-bottom:1.25rem;font-size:.95rem">
             Kaution: <strong><?= number_format($abrechnenKaution['betrag'],2,',','.') ?> €</strong> −
             Einbehalte: <strong id="vorschauEinbehalte">0,00 €</strong> =
             Rückzahlung: <strong id="vorschauRueckzahlung" style="color:var(--success)"><?= number_format($abrechnenKaution['betrag'],2,',','.') ?> €</strong>
         </div>
 
         <button type="submit" class="btn btn-primary">Kaution abrechnen &amp; abschließen</button>
-        <a href="kaution.php" class="btn btn-sm" style="background:#e2e8f0">Abbrechen</a>
+        <a href="kaution.php" class="btn btn-sm" style="background:var(--card-bg-high);color:var(--text)">Abbrechen</a>
     </form>
 </div>
 
@@ -348,7 +348,7 @@ document.querySelectorAll('input[name="einbehalt_betrag[]"]').forEach(f => f.add
         <?php if (!empty($abrechnungJeKaution[$k['id']])):
             $abr = $abrechnungJeKaution[$k['id']];
         ?>
-        <tr style="background:#f8fafc">
+        <tr style="background:var(--card-bg-high)">
             <td colspan="7" style="padding:.5rem 1rem 1rem">
                 <small style="color:var(--muted)">
                     Abgerechnet am <?= date('d.m.Y', strtotime($abr['datum_abrechnung'])) ?>:

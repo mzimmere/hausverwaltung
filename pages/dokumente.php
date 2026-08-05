@@ -159,7 +159,7 @@ include '../assets/header.php';
                 <?php if (!istNurLesend()): ?>
                 <form method="post" id="doku-edit-<?= $d['id'] ?>" style="display:inline"><?= csrfFeld() ?><input type="hidden" name="edit_id" value="<?= $d['id'] ?>"><button type="submit" class="btn btn-sm btn-success" title="Zuordnung speichern">💾</button></form>
                 <?php endif; ?>
-                <a href="datei.php?typ=dokument&id=<?= $d['id'] ?>" target="_blank" class="btn btn-sm" style="background:#e2e8f0">📄</a>
+                <a href="datei.php?typ=dokument&id=<?= $d['id'] ?>" target="_blank" class="btn btn-sm" style="background:var(--card-bg-high);color:var(--text)">📄</a>
                 <?php if (!istNurLesend()): ?>
                 <form method="post" style="display:inline" onsubmit="return confirm('Löschen?')"><?= csrfFeld() ?><input type="hidden" name="delete_id" value="<?= $d['id'] ?>"><button type="submit" class="btn btn-sm btn-danger">✕</button></form>
                 <?php endif; ?>

@@ -179,7 +179,7 @@ include '../assets/header.php';
                     <?php if (!$g['gueltig_bis']): ?>
                     <a href="?beenden=<?= $g['id'] ?>" class="btn btn-sm btn-danger" onclick="return confirm('Gutschrift zum heutigen Datum beenden?')">Beenden</a>
                     <?php endif; ?>
-                    <a href="?toggle=<?= $g['id'] ?>" class="btn btn-sm" style="background:#e2e8f0"><?= $g['aktiv'] ? 'Deaktivieren' : 'Aktivieren' ?></a>
+                    <a href="?toggle=<?= $g['id'] ?>" class="btn btn-sm" style="background:var(--card-bg-high);color:var(--text)"><?= $g['aktiv'] ? 'Deaktivieren' : 'Aktivieren' ?></a>
                     <a href="?delete=<?= $g['id'] ?>" class="btn btn-sm btn-danger" onclick="return confirm('Wirklich endgültig löschen?')">✕</a>
                 </div>
             </td>

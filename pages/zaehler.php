@@ -82,7 +82,7 @@ include '../assets/header.php';
     <h1>Zählerstände Wasser</h1>
     <div>
         <?php foreach ([date('Y')-1, date('Y')] as $j): ?>
-        <a href="?jahr=<?= $j ?>" class="btn btn-sm <?= $j==$filterJahr ? 'btn-primary' : '' ?>" style="<?= $j!=$filterJahr ? 'background:#e2e8f0;color:#333' : '' ?>"><?= $j ?></a>
+        <a href="?jahr=<?= $j ?>" class="btn btn-sm <?= $j==$filterJahr ? 'btn-primary' : '' ?>" style="<?= $j!=$filterJahr ? 'background:var(--card-bg-high);color:var(--text)' : '' ?>"><?= $j ?></a>
         <?php endforeach; ?>
     </div>
 </div>

@@ -83,7 +83,7 @@ include '../assets/header.php';
             <td class="text-right"><?= $vz ? '<strong>'.number_format($jahresbetrag,2,',','.').' &euro;</strong>' : '–' ?></td>
         </tr>
         <?php endforeach; ?>
-        <tr style="background:#f0f5fb;font-weight:700">
+        <tr style="background:var(--card-bg-high);font-weight:700">
             <td colspan="3">Gesamt Vorauszahlungen</td>
             <td class="text-right"><?= number_format($gesamt,2,',','.') ?> &euro;</td>
         </tr>

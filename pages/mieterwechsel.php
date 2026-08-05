@@ -153,8 +153,8 @@ include '../assets/header.php';
 
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:2rem">
 
-            <div style="background:#fff8f0;border:2px solid #e8a020;border-radius:8px;padding:1.25rem">
-                <h3 style="color:#c07010;margin-bottom:1rem">📤 Ausziehender Mieter</h3>
+            <div style="background:var(--accent-container);border:2px solid var(--accent);border-radius:12px;padding:1.25rem">
+                <h3 style="color:var(--accent);margin-bottom:1rem">📤 Ausziehender Mieter</h3>
                 <div class="form-group">
                     <label>Name des alten Mieters *</label>
                     <input type="text" name="mieter_alt_name" placeholder="z.B. Familie Müller" required>
@@ -165,8 +165,8 @@ include '../assets/header.php';
                 </div>
             </div>
 
-            <div style="background:#f0fff4;border:2px solid #27ae60;border-radius:8px;padding:1.25rem">
-                <h3 style="color:#1a7a40;margin-bottom:1rem">📥 Einziehender Mieter</h3>
+            <div style="background:var(--success-container);border:2px solid var(--success);border-radius:12px;padding:1.25rem">
+                <h3 style="color:var(--success);margin-bottom:1rem">📥 Einziehender Mieter</h3>
                 <div class="form-group">
                     <label>Name des neuen Mieters *</label>
                     <input type="text" name="mieter_neu_name" placeholder="z.B. Familie Wagner" required>
@@ -179,7 +179,7 @@ include '../assets/header.php';
 
         </div>
 
-        <div style="margin-top:1.5rem;background:#f4f6f9;border-radius:8px;padding:1.25rem">
+        <div style="margin-top:1.5rem;background:var(--card-bg-high);border-radius:12px;padding:1.25rem">
             <h3 style="margin-bottom:1rem;font-size:1rem">Übergabe-Zählerstand (für die Abrechnung)</h3>
             <div class="form-grid">
                 <div class="form-group">
@@ -194,7 +194,7 @@ include '../assets/header.php';
             </div>
         </div>
 
-        <div style="margin-top:1.25rem;background:#f8fafc;border-radius:8px;padding:1.25rem">
+        <div style="margin-top:1.25rem;background:var(--card-bg-high);border-radius:12px;padding:1.25rem">
             <h3 style="margin-bottom:.25rem;font-size:1rem">Weitere Zählerstände (nur Dokumentation)</h3>
             <p style="margin-bottom:1rem;color:var(--muted);font-size:.85rem">
                 Diese Werte werden nur gespeichert und angezeigt – sie fließen
@@ -216,7 +216,7 @@ include '../assets/header.php';
             </div>
         </div>
 
-        <div style="margin-top:1.25rem;background:#f8fafc;border-radius:8px;padding:1.25rem">
+        <div style="margin-top:1.25rem;background:var(--card-bg-high);border-radius:12px;padding:1.25rem">
             <h3 style="margin-bottom:.5rem;font-size:1rem">Übergabeprotokoll</h3>
             <div class="form-group" style="max-width:400px">
                 <label>Datei hochladen (PDF, JPG, PNG)</label>
@@ -294,7 +294,7 @@ include '../assets/header.php';
             </td>
             <td>
                 <?php if ($w['protokoll_dateiname']): ?>
-                <a href="../uploads/uebergabeprotokolle/<?= $w['protokoll_dateiname'] ?>" target="_blank" class="btn btn-sm" style="background:#e2e8f0">📄 ansehen</a>
+                <a href="../uploads/uebergabeprotokolle/<?= $w['protokoll_dateiname'] ?>" target="_blank" class="btn btn-sm" style="background:var(--card-bg-high);color:var(--text)">📄 ansehen</a>
                 <?php else: ?>
                 <span style="color:var(--muted)">–</span>
                 <?php endif; ?>

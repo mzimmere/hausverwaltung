@@ -397,7 +397,7 @@ include '../assets/header.php';
 
 <!-- ── Restore-Bestätigungsmodal ── -->
 <div id="restoreModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:1000;align-items:center;justify-content:center">
-    <div style="background:#fff;border-radius:10px;max-width:480px;width:90%;padding:1.75rem;box-shadow:0 10px 40px rgba(0,0,0,.3)">
+    <div style="background:var(--card-bg);border-radius:16px;max-width:480px;width:90%;padding:1.75rem;box-shadow:0 10px 40px rgba(0,0,0,.3)">
         <h2 style="color:var(--danger);margin-bottom:1rem">⚠️ Backup wiederherstellen</h2>
         <p style="margin-bottom:1rem">
             Sie sind dabei, <strong id="restoreDateiName"></strong> wiederherzustellen.
@@ -416,7 +416,7 @@ include '../assets/header.php';
             </div>
             <div class="btn-group">
                 <button type="submit" name="restore" class="btn btn-danger">Jetzt wiederherstellen</button>
-                <button type="button" class="btn btn-sm" style="background:#e2e8f0" onclick="restoreModalSchliessen()">Abbrechen</button>
+                <button type="button" class="btn btn-sm" style="background:var(--card-bg-high);color:var(--text)" onclick="restoreModalSchliessen()">Abbrechen</button>
             </div>
         </form>
     </div>

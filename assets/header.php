@@ -83,6 +83,13 @@ $currentPage = basename($_SERVER['PHP_SELF']);
 // ------------------------------------------------------------
 $changelog = [
     [
+        'version' => 'v59',
+        'datum'   => 'Juli 2026',
+        'punkte'  => [
+            'Restliche ~17 Seiten (u.a. Zählerstände, Wartung/Versorger, Mieterwechsel, Kaution, Dokumente, Einstellungen) auf dieselben Material-Farbvariablen umgestellt – keine fest einprogrammierten Farben mehr, die im Dunkelmodus schlecht lesbar waren',
+        ],
+    ],
+    [
         'version' => 'v58',
         'datum'   => 'Juli 2026',
         'punkte'  => [

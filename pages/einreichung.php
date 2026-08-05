@@ -162,7 +162,7 @@ include '../assets/header.php';
                 <div style="font-size:.78rem;color:var(--muted);margin-top:.25rem">💬 <?= htmlspecialchars($e['nachricht']) ?></div>
                 <?php endif; ?>
             </td>
-            <td><a href="einreichung_datei.php?id=<?= $e['id'] ?>" target="_blank" class="btn btn-sm" style="background:#e2e8f0">📄</a></td>
+            <td><a href="einreichung_datei.php?id=<?= $e['id'] ?>" target="_blank" class="btn btn-sm" style="background:var(--card-bg-high);color:var(--text)">📄</a></td>
         </tr>
         <?php endforeach; ?>
         <?php if (!$meineEinreichungen): ?><tr><td colspan="6" class="text-center" style="color:var(--muted)">Noch keine Einreichungen</td></tr><?php endif; ?>

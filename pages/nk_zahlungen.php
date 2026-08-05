@@ -101,7 +101,7 @@ include '../assets/header.php';
     <div>
         <?php foreach ([date('Y')-2, date('Y')-1, date('Y')] as $j): ?>
         <a href="?jahr=<?= $j ?>" class="btn btn-sm <?= $j==$filterJahr ? 'btn-primary' : '' ?>"
-           style="<?= $j!=$filterJahr ? 'background:#e2e8f0;color:#333' : '' ?>"><?= $j ?></a>
+           style="<?= $j!=$filterJahr ? 'background:var(--card-bg-high);color:var(--text)' : '' ?>"><?= $j ?></a>
         <?php endforeach; ?>
     </div>
 </div>
@@ -142,13 +142,13 @@ include '../assets/header.php';
     </h2>
 
     <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;margin-bottom:1rem">
-        <div style="text-align:center;padding:.75rem;background:#f8fafc;border-radius:8px">
+        <div style="text-align:center;padding:.75rem;background:var(--card-bg-high);border-radius:8px">
             <div style="font-size:.75rem;color:var(--muted);text-transform:uppercase">Laut Abrechnung</div>
             <div style="font-size:1.3rem;font-weight:700" class="<?= $a['saldo']>0 ? 'positiv' : 'negativ' ?>">
                 <?= number_format(abs($a['saldo']),2,',','.') ?> € <?= $sollTyp ?>
             </div>
         </div>
-        <div style="text-align:center;padding:.75rem;background:#f8fafc;border-radius:8px">
+        <div style="text-align:center;padding:.75rem;background:var(--card-bg-high);border-radius:8px">
             <div style="font-size:.75rem;color:var(--muted);text-transform:uppercase">Bereits erfasst</div>
             <div style="font-size:1.3rem;font-weight:700;color:var(--muted)">
                 <?= number_format(abs($bereitsErfasst),2,',','.') ?> €
@@ -177,7 +177,7 @@ include '../assets/header.php';
     <?php endif; ?>
 
     <?php if (abs($offen) > 0.01 && !istNurLesend()): ?>
-    <form method="post" style="display:flex;gap:.75rem;align-items:end;flex-wrap:wrap;background:#f8fafc;padding:.75rem;border-radius:8px">
+    <form method="post" style="display:flex;gap:.75rem;align-items:end;flex-wrap:wrap;background:var(--card-bg-high);padding:.75rem;border-radius:8px">
         <?= csrfFeld() ?>
         <input type="hidden" name="action" value="save">
         <input type="hidden" name="abrechnung_id" value="<?= $a['id'] ?>">

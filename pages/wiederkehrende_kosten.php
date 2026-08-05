@@ -193,7 +193,7 @@ include '../assets/header.php';
             </div>
         </div>
 
-        <div style="margin-top:1.25rem;padding:1rem;background:#f8fafc;border-radius:8px">
+        <div style="margin-top:1.25rem;padding:1rem;background:var(--card-bg-high);border-radius:12px">
             <label style="display:block;margin-bottom:.6rem;font-weight:600;font-size:.85rem;color:var(--muted)">
                 Welche Wohnungen sind beteiligt?
             </label>
@@ -209,7 +209,7 @@ include '../assets/header.php';
                 </label>
             </div>
 
-            <p id="wk-hinweis-volle-summe" style="display:none;margin-bottom:.6rem;color:#856404;font-size:.85rem;background:#fff3cd;padding:.5rem .75rem;border-radius:6px">
+            <p id="wk-hinweis-volle-summe" style="display:none;margin-bottom:.6rem;color:var(--accent);font-size:.85rem;background:var(--accent-container);padding:.5rem .75rem;border-radius:6px">
                 Beispiel: 200 €/Monat eingetragen, EG + OG angekreuzt → EG zahlt 200 €/Monat
                 <strong>und</strong> OG zahlt ebenfalls 200 €/Monat.
             </p>
@@ -229,7 +229,7 @@ include '../assets/header.php';
                 </tr>
                 <?php endforeach; ?>
             </table>
-            <button type="button" id="wk-btn-gleich-verteilen" class="btn btn-sm" style="background:#e2e8f0;margin-top:.5rem" onclick="wkGleichVerteilen()">Gleich verteilen (auf angehakte Wohnungen)</button>
+            <button type="button" id="wk-btn-gleich-verteilen" class="btn btn-sm" style="background:var(--card-bg-high);color:var(--text);margin-top:.5rem" onclick="wkGleichVerteilen()">Gleich verteilen (auf angehakte Wohnungen)</button>
         </div>
 
         <div style="margin-top:1rem">
@@ -303,7 +303,7 @@ function wkGleichVerteilen() {
                     <?php if (!$wk['gueltig_bis']): ?>
                     <a href="?beenden=<?= $wk['id'] ?>" class="btn btn-sm btn-danger" onclick="return confirm('Zum heutigen Datum beenden?')">Beenden</a>
                     <?php endif; ?>
-                    <a href="?toggle=<?= $wk['id'] ?>" class="btn btn-sm" style="background:#e2e8f0"><?= $wk['aktiv'] ? 'Deaktivieren' : 'Aktivieren' ?></a>
+                    <a href="?toggle=<?= $wk['id'] ?>" class="btn btn-sm" style="background:var(--card-bg-high);color:var(--text)"><?= $wk['aktiv'] ? 'Deaktivieren' : 'Aktivieren' ?></a>
                     <a href="?delete=<?= $wk['id'] ?>" class="btn btn-sm btn-danger" onclick="return confirm('Wirklich endgültig löschen?')">✕</a>
                 </div>
             </td>

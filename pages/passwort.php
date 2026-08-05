@@ -287,7 +287,7 @@ function linkKopiertOk() {
         </div>
         <div style="margin-top:1rem">
             <button type="submit" class="btn btn-primary">Änderungen speichern</button>
-            <a href="passwort.php" class="btn" style="background:#e2e8f0;color:#333">Abbrechen</a>
+            <a href="passwort.php" class="btn" style="background:var(--card-bg-high);color:var(--text)">Abbrechen</a>
         </div>
     </form>
     <script>
@@ -401,7 +401,7 @@ function linkKopiertOk() {
             </td>
             <td><?= $b['letzter_login'] ? date('d.m.Y H:i', strtotime($b['letzter_login'])) : '–' ?></td>
             <td style="white-space:nowrap">
-                <a href="?edit=<?= $b['id'] ?>" class="btn btn-sm" style="background:#e2e8f0;color:#333" title="Rolle / Wohnung / Name ändern">✏️</a>
+                <a href="?edit=<?= $b['id'] ?>" class="btn btn-sm" style="background:var(--card-bg-high);color:var(--text)" title="Rolle / Wohnung / Name ändern">✏️</a>
                 <form method="post" style="display:inline" onsubmit="return confirm('Neuen Link für <?= htmlspecialchars($b['benutzername']) ?> erzeugen?<?= $b['link_offen'] ? ' Der bisherige offene Link wird dabei ungültig.' : '' ?>')"><?= csrfFeld() ?><input type="hidden" name="linkfuer" value="<?= $b['id'] ?>"><button type="submit" class="btn btn-sm btn-primary">🔗 Link</button></form>
                 <?php if ((int)$b['id'] !== (int)$benutzer['id']): ?>
                 <form method="post" style="display:inline" onsubmit="return confirm('<?= $b['aktiv'] ? 'Benutzer sperren?' : 'Benutzer aktivieren?' ?>')"><?= csrfFeld() ?><input type="hidden" name="toggle" value="<?= $b['id'] ?>"><button type="submit" class="btn btn-sm <?= $b['aktiv'] ? 'btn-danger' : 'btn-success' ?>"><?= $b['aktiv'] ? 'Sperren' : 'Aktivieren' ?></button></form>

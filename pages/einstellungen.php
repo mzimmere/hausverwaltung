@@ -142,7 +142,7 @@ include '../assets/header.php';
         <thead><tr><th>Name</th><th>Ort</th><th>Status</th><th></th></tr></thead>
         <tbody>
         <?php foreach ($alleObjekte as $o): ?>
-        <tr<?= (int)$o['id'] === $objektId ? ' style="background:#f0f5fb"' : '' ?>>
+        <tr<?= (int)$o['id'] === $objektId ? ' style="background:var(--card-bg-high)"' : '' ?>>
             <td><?= htmlspecialchars($o['name']) ?><?= (int)$o['id'] === $objektId ? ' <strong>(aktiv ausgewählt)</strong>' : '' ?></td>
             <td><?= htmlspecialchars($o['ort'] ?? '–') ?></td>
             <td>
@@ -155,7 +155,7 @@ include '../assets/header.php';
                     <?php if ((int)$o['id'] !== $objektId): ?>
                     <a href="?objekt_wechsel=<?= $o['id'] ?>" class="btn btn-sm btn-primary">Wechseln</a>
                     <?php endif; ?>
-                    <a href="?objekt_toggle=<?= $o['id'] ?>" class="btn btn-sm" style="background:#e2e8f0"
+                    <a href="?objekt_toggle=<?= $o['id'] ?>" class="btn btn-sm" style="background:var(--card-bg-high);color:var(--text)"
                        onclick="return confirm('<?= $o['aktiv'] ? 'Immobilie deaktivieren? Sie verschwindet dann aus dem Umschalter, Daten bleiben erhalten.' : 'Immobilie wieder aktivieren?' ?>')">
                         <?= $o['aktiv'] ? 'Deaktivieren' : 'Aktivieren' ?>
                     </a>

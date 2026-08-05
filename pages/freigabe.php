@@ -294,21 +294,21 @@ include '../assets/header.php';
         </div>
 
         <!-- ── Positionen: umlegbar (Kostenart) oder nicht umlegbar (Kategorie) ── -->
-        <div style="margin-top:1.25rem;padding:1rem;background:var(--tile-neutral);border:1px solid #e8a020;border-radius:8px">
-            <label style="color:#c07010;display:block;margin-bottom:.6rem">
+        <div style="margin-top:1.25rem;padding:1rem;background:var(--accent-container);border:1px solid var(--accent);border-radius:12px">
+            <label style="color:var(--accent);display:block;margin-bottom:.6rem">
                 Wie soll dieser Betrag zugeordnet werden? Bei Bedarf auf mehrere Positionen aufteilen.
             </label>
 
             <div id="positionenListe"></div>
 
-            <button type="button" class="btn btn-sm" style="background:#e2e8f0;margin-top:.25rem" onclick="positionHinzufuegen()">+ Weitere Position</button>
+            <button type="button" class="btn btn-sm" style="background:var(--card-bg-high);color:var(--text);margin-top:.25rem" onclick="positionHinzufuegen()">+ Weitere Position</button>
 
             <div id="positionenSumme" style="margin-top:.75rem;font-size:.9rem"></div>
         </div>
 
         <div style="margin-top:1rem">
             <button type="submit" class="btn btn-success">✓ Freigeben &amp; anlegen</button>
-            <a href="freigabe.php" class="btn" style="background:#e2e8f0;color:#333">Zurück zur Liste</a>
+            <a href="freigabe.php" class="btn" style="background:var(--card-bg-high);color:var(--text)">Zurück zur Liste</a>
         </div>
     </form>
 
@@ -405,7 +405,7 @@ function positionenSummeAktualisieren() {
     const anzeige = document.getElementById('positionenSumme');
     anzeige.innerHTML = 'Positionen ergeben: <strong style="color:' + farbe + '">' + summe.toFixed(2).replace('.', ',') + ' €</strong>'
         + ' von ' + posZielBetrag.toFixed(2).replace('.', ',') + ' € eingereicht'
-        + (diff >= 0.01 ? ' <span style="color:#c07010">(Differenz: ' + diff.toFixed(2).replace('.', ',') + ' €)</span>' : ' ✓');
+        + (diff >= 0.01 ? ' <span style="color:var(--accent)">(Differenz: ' + diff.toFixed(2).replace('.', ',') + ' €)</span>' : ' ✓');
 }
 
 positionHinzufuegen(
@@ -434,7 +434,7 @@ positionHinzufuegen(
                 <?php else: ?><span style="color:var(--muted)">unklar</span>
                 <?php endif; ?>
             </td>
-            <td><a href="einreichung_datei.php?id=<?= $e['id'] ?>" target="_blank" class="btn btn-sm" style="background:#e2e8f0">📄</a></td>
+            <td><a href="einreichung_datei.php?id=<?= $e['id'] ?>" target="_blank" class="btn btn-sm" style="background:var(--card-bg-high);color:var(--text)">📄</a></td>
             <td><a href="freigabe.php?id=<?= $e['id'] ?>" class="btn btn-sm btn-primary">Prüfen &amp; freigeben</a></td>
         </tr>
         <?php endforeach; ?>

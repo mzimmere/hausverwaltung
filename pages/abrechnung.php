@@ -331,7 +331,7 @@ include '../assets/header.php';
         <div class="btn-group">
             <?php foreach ($vorschlaege as $v): ?>
             <span style="display:inline-flex;align-items:center;gap:2px">
-                <button type="button" class="btn btn-sm" style="background:#e2e8f0;color:#333"
+                <button type="button" class="btn btn-sm" style="background:var(--card-bg-high);color:var(--text)"
                     onclick="document.getElementById('zv').value='<?= $v['von_datum'] ?>';document.getElementById('zb').value='<?= $v['bis_datum'] ?>';document.getElementById('bez').value='<?= htmlspecialchars($v['label']) ?>';">
                     <?= htmlspecialchars($v['label']) ?>
                 </button>
@@ -343,7 +343,7 @@ include '../assets/header.php';
 
         <details style="margin-top:.75rem">
             <summary style="cursor:pointer;font-size:.85rem;color:var(--primary)">+ Eigene Vorlage anlegen</summary>
-            <form method="post" style="margin-top:.75rem;padding:1rem;background:#f8fafc;border-radius:8px">
+            <form method="post" style="margin-top:.75rem;padding:1rem;background:var(--card-bg-high);border-radius:12px">
                 <?= csrfFeld() ?>
                 <div class="form-grid">
                     <div class="form-group">
@@ -404,7 +404,7 @@ include '../assets/header.php';
         <?php foreach ($vorhandeneZeitraeume as $z): ?>
         <a href="?von=<?= $z['zeitraum_von'] ?>&bis=<?= $z['zeitraum_bis'] ?>"
            class="btn btn-sm <?= ($z['zeitraum_von']==$filterVon && $z['zeitraum_bis']==$filterBis) ? 'btn-primary' : '' ?>"
-           style="<?= !($z['zeitraum_von']==$filterVon && $z['zeitraum_bis']==$filterBis) ? 'background:#e2e8f0;color:#333' : '' ?>">
+           style="<?= !($z['zeitraum_von']==$filterVon && $z['zeitraum_bis']==$filterBis) ? 'background:var(--card-bg-high);color:var(--text)' : '' ?>">
             <?= htmlspecialchars($z['bezeichnung']) ?>
         </a>
         <?php endforeach; ?>
@@ -428,7 +428,7 @@ include '../assets/header.php';
             if ($a['wohnung_id'] !== $letzteWohnungId):
                 $letzteWohnungId = $a['wohnung_id'];
         ?>
-        <tr style="background:#e8f0f8">
+        <tr style="background:var(--primary-container)">
             <td colspan="6" style="font-weight:700;color:var(--primary);padding:.5rem 1rem">
                 🏠 Wohnung <?= htmlspecialchars($a['wohnung_bez']) ?> (<?= number_format($a['wohnflaeche'],0,',','.') ?> m²)
             </td>
@@ -468,7 +468,7 @@ include '../assets/header.php';
         $pos->execute([$a['id']]);
         $positionen = $pos->fetchAll();
     ?>
-    <div style="margin:1rem 0 .5rem;padding:.5rem 1rem;background:#f0f5fb;border-radius:6px">
+    <div style="margin:1rem 0 .5rem;padding:.5rem 1rem;background:var(--card-bg-high);border-radius:8px">
         <strong style="color:var(--primary)"><?= htmlspecialchars($a['wohnung_bez']) ?> – <?= htmlspecialchars($a['mieter_name']) ?></strong>
         <span style="color:var(--muted);font-size:.9rem;margin-left:.5rem">
             <?= date('d.m.Y', strtotime($a['zeitraum_von'])) ?> – <?= date('d.m.Y', strtotime($a['zeitraum_bis'])) ?>
@@ -480,14 +480,14 @@ include '../assets/header.php';
         <tbody>
         <?php foreach ($positionen as $p):
             if ($p['ist_gutschrift']): ?>
-        <tr style="background:#f0fff4">
+        <tr style="background:var(--success-container)">
             <td style="color:var(--success)">💚 <?= htmlspecialchars($p['kostenart']) ?></td>
             <td class="text-right" style="color:var(--success);font-weight:700"><?= number_format($p['betrag'],2,',','.') ?> €</td>
         </tr>
         <?php else: ?>
         <tr><td><?= htmlspecialchars($p['kostenart']) ?></td><td class="text-right"><?= number_format($p['betrag'],2,',','.') ?> €</td></tr>
         <?php endif; endforeach; ?>
-        <tr style="font-weight:700;background:#f0f5fb">
+        <tr style="font-weight:700;background:var(--card-bg-high)">
             <td>Zwischensumme Kosten</td>
             <td class="text-right"><?= number_format($a['gesamtkosten'],2,',','.') ?> €</td>
         </tr>

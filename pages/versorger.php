@@ -296,7 +296,7 @@ include '../assets/header.php';
                 <form method="post" style="display:inline" onsubmit="return confirm('<?= $v['aktiv'] ? 'Versorger als inaktiv markieren?' : 'Wieder aktivieren?' ?>')">
                     <?= csrfFeld() ?>
                     <input type="hidden" name="toggle_versorger" value="<?= $v['id'] ?>">
-                    <button type="submit" class="btn btn-sm" style="background:#e2e8f0;color:#333"><?= $v['aktiv'] ? 'Deaktivieren' : 'Aktivieren' ?></button>
+                    <button type="submit" class="btn btn-sm" style="background:var(--card-bg-high);color:var(--text)"><?= $v['aktiv'] ? 'Deaktivieren' : 'Aktivieren' ?></button>
                 </form>
             </td>
         </tr>
@@ -311,7 +311,7 @@ include '../assets/header.php';
 <?php else: ?>
 <!-- ═══════════ DETAIL EINES VERSORGERS ═══════════ -->
 <div style="margin-bottom:1rem">
-    <a href="versorger.php" class="btn btn-sm" style="background:#e2e8f0;color:#333">← Alle Versorger</a>
+    <a href="versorger.php" class="btn btn-sm" style="background:var(--card-bg-high);color:var(--text)">← Alle Versorger</a>
 </div>
 
 <div class="card" style="border-left:4px solid var(--primary)">
@@ -452,7 +452,7 @@ include '../assets/header.php';
                     <form method="post" style="display:inline" onsubmit="return confirm('Übernahme rückgängig machen? Die erzeugte Rechnung wird gelöscht.')">
                         <?= csrfFeld() ?>
                         <input type="hidden" name="ruecknahme_id" value="<?= $va['id'] ?>">
-                        <button type="submit" class="btn btn-sm" style="background:#e2e8f0;color:#333">Rückgängig</button>
+                        <button type="submit" class="btn btn-sm" style="background:var(--card-bg-high);color:var(--text)">Rückgängig</button>
                     </form>
                     <?php endif; ?>
                 </td>
