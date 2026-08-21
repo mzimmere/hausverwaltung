@@ -66,7 +66,7 @@ if (($user['rolle'] ?? '') === 'hausmeister') {
 
 // Mieter-Sperre: nur die eigene Wohnungs-Ansicht, Einreichung und Konto
 if (($user['rolle'] ?? '') === 'mieter') {
-    $mieterErlaubt = ['meine_wohnung.php', 'einreichung.php', 'einreichung_datei.php', 'dokumentensafe.php', 'datei.php', 'passwort.php'];
+    $mieterErlaubt = ['meine_wohnung.php', 'einreichung.php', 'einreichung_datei.php', 'dokumentensafe.php', 'fotoalbum.php', 'datei.php', 'passwort.php'];
     if (!in_array(basename($_SERVER['PHP_SELF']), $mieterErlaubt, true)) {
         header('Location: ' . ($basePath ?? '') . 'pages/meine_wohnung.php');
         exit;
@@ -82,6 +82,13 @@ $currentPage = basename($_SERVER['PHP_SELF']);
 // Versions-Badge in der Leiste und den CSS-Cache-Buster)
 // ------------------------------------------------------------
 $changelog = [
+    [
+        'version' => 'v65',
+        'datum'   => 'August 2026',
+        'punkte'  => [
+            'Neu: Fotoalbum (Menüpunkt) – vom Vermieter gepflegte Bildersammlung fürs ganze Haus, in frei anlegbaren Kategorien. Pro Foto legt die Verwaltung fest, welche Wohnungen/Mieter es sehen dürfen ("Alle Mieter" oder gezielt einzelne)',
+        ],
+    ],
     [
         'version' => 'v64',
         'datum'   => 'August 2026',
@@ -544,6 +551,8 @@ $navItems = [
         '<line x1="3" y1="22" x2="21" y2="22"/><line x1="6" y1="18.5" x2="6" y2="11"/><line x1="10" y1="18.5" x2="10" y2="11"/><line x1="14" y1="18.5" x2="14" y2="11"/><line x1="18" y1="18.5" x2="18" y2="11"/><path d="M12 2l9 5.5H3z"/>', ''],
     ['dokumente.php', 'Dokumente',
         '<path d="M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.7-.9L9.2 3.9A2 2 0 0 0 7.5 3H4a2 2 0 0 0-2 2v13c0 1.1.9 2 2 2Z"/>', ''],
+    ['fotoalbum.php', 'Fotoalbum',
+        '<rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/>', ''],
     ['einstellungen.php', 'Einstellungen',
         '<circle cx="12" cy="12" r="3"/><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/>', ''],
 ];
@@ -568,6 +577,8 @@ if (($user['rolle'] ?? '') === 'hausmeister') {
             '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>', ''],
         ['dokumentensafe.php', 'Dokumentensafe',
             '<rect x="3" y="11" width="18" height="10" rx="2"/><circle cx="12" cy="16" r="1.5"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>', ''],
+        ['fotoalbum.php', 'Fotoalbum',
+            '<rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/>', ''],
     ];
 } elseif (function_exists('istAdmin') && istAdmin()) {
     // Admin: Freigabe- und Wartungs-Seite direkt hinter den Rechnungen einfügen

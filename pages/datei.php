@@ -4,10 +4,12 @@
  *   datei.php?typ=dokument&id=…   → Datei aus der Dokumentenverwaltung
  *   datei.php?typ=rechnung&id=…   → hochgeladene Rechnung
  *   datei.php?typ=safe&id=…       → Datei aus dem privaten Dokumentensafe
+ *   datei.php?typ=fotoalbum&id=…  → Bild aus dem Fotoalbum
  * Zugriffsregeln:
  *   Admin/Leser:  alles
  *   Mieter:       nur Dokumente der eigenen Wohnung mit Freigabe 'mieter';
- *                 Dokumentensafe ausschließlich der eigenen Wohnung
+ *                 Dokumentensafe ausschließlich der eigenen Wohnung;
+ *                 Fotoalbum nur Bilder, die für die eigene Wohnung freigegeben sind
  *   Hausmeister:  nur Dokumente mit Freigabe 'hausmeister'
  *   Rechnungsdateien: ausschließlich Admin/Leser
  */
@@ -63,6 +65,25 @@ if ($typ === 'dokument') {
         }
         $datei = UPLOAD_DOKUMENTENSAFE . str_replace(['..', '\\'], '', $row['dateiname']);
     }
+} elseif ($typ === 'fotoalbum') {
+    $stmt = $db->prepare("SELECT dateiname, objekt_id FROM fotoalbum_bilder WHERE id = ?");
+    $stmt->execute([$id]);
+    if ($row = $stmt->fetch()) {
+        if (in_array($user['rolle'], ['admin', 'leser'], true)) {
+            $erlaubt = (int)$row['objekt_id'] === aktivesObjekt();
+        } elseif ($user['rolle'] === 'mieter') {
+            $sichtStmt = $db->prepare("SELECT 1 FROM fotoalbum_sichtbarkeit WHERE bild_id = ? AND wohnung_id = ?");
+            $sichtStmt->execute([$id, (int)($user['wohnung_id'] ?? 0)]);
+            $erlaubt = (bool)$sichtStmt->fetchColumn();
+        } else {
+            $erlaubt = false;
+        }
+        if (!$erlaubt) {
+            http_response_code(403);
+            exit('Kein Zugriff.');
+        }
+        $datei = UPLOAD_FOTOALBUM . str_replace(['..', '\\'], '', $row['dateiname']);
+    }
 } elseif ($typ === 'rechnung') {
     if (in_array($user['rolle'], ['mieter', 'hausmeister'], true)) {
         http_response_code(403);
@@ -91,6 +112,7 @@ $mime = [
     'jpeg' => 'image/jpeg',
     'png'  => 'image/png',
     'gif'  => 'image/gif',
+    'webp' => 'image/webp',
     'doc'  => 'application/msword',
     'docx' => 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
     'xls'  => 'application/vnd.ms-excel',

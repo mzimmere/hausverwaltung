@@ -18,8 +18,8 @@ cp "$PROJECT_ROOT"index.php "$PROJECT_ROOT"login.php "$PROJECT_ROOT"logout.php \
    "$PROJECT_ROOT"setup.php "$APP"/
 
 mkdir -p "$APP"/uploads/abrechnungen "$APP"/uploads/rechnungen/einreichungen \
-         "$APP"/uploads/dokumente "$APP"/uploads/dokumentensafe "$APP"/uploads/eigentuemerkosten \
-         "$APP"/uploads/uebergabeprotokolle "$APP"/backups
+         "$APP"/uploads/dokumente "$APP"/uploads/dokumentensafe "$APP"/uploads/fotoalbum \
+         "$APP"/uploads/eigentuemerkosten "$APP"/uploads/uebergabeprotokolle "$APP"/backups
 
 rm -f "$APP"/config/init.sql
 
