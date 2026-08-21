@@ -2,7 +2,7 @@
     "packages": [
         {
             "package": "HausVerwaltung",
-            "version": "59-1",
+            "version": "60-1",
             "dname": "Hausverwaltung",
             "desc": "Nebenkostenabrechnung und Hausverwaltung für Mehrparteienhäuser. Läuft als PHP-Webanwendung über Web Station. Nach der Installation einmalig eine SQL-Datei in phpMyAdmin ausführen (Anleitung erscheint nach der Installation).",
             "maintainer": "Matthias Zimmerer",
@@ -16,10 +16,10 @@
             "thumbnail": [
                 "https://hausverwaltung-updatecheck.vercel.app/PACKAGE_ICON_256.PNG"
             ],
-            "link": "https://github.com/mzimmere/hausverwaltung/releases/download/v59/HausVerwaltung.spk",
-            "md5": "6749178403407181cca65aaa36289840",
-            "sha256": "f768c93f12737a6394540f90004d751e829dc906b61adbc645bbb53723ba2159",
-            "size": 163840
+            "link": "https://github.com/mzimmere/hausverwaltung/releases/download/v60/HausVerwaltung.spk",
+            "md5": "fe38daf5e2447f561600b566e6efd788",
+            "sha256": "fbab8dd1d05d41143793e304747127b06dd74b59b893ab82297533b6795a6d76",
+            "size": 174080
         }
     ]
 }

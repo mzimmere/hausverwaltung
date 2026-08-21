@@ -3,9 +3,11 @@
  * Geschützter Datei-Abruf für Dokumente und Rechnungsdateien.
  *   datei.php?typ=dokument&id=…   → Datei aus der Dokumentenverwaltung
  *   datei.php?typ=rechnung&id=…   → hochgeladene Rechnung
+ *   datei.php?typ=safe&id=…       → Datei aus dem privaten Dokumentensafe
  * Zugriffsregeln:
  *   Admin/Leser:  alles
- *   Mieter:       nur Dokumente der eigenen Wohnung mit Freigabe 'mieter'
+ *   Mieter:       nur Dokumente der eigenen Wohnung mit Freigabe 'mieter';
+ *                 Dokumentensafe ausschließlich der eigenen Wohnung
  *   Hausmeister:  nur Dokumente mit Freigabe 'hausmeister'
  *   Rechnungsdateien: ausschließlich Admin/Leser
  */
@@ -39,6 +41,20 @@ if ($typ === 'dokument') {
             exit('Kein Zugriff.');
         }
         $datei = UPLOAD_DOKUMENTE . str_replace(['..', '\\'], '', $row['dateiname']);
+    }
+} elseif ($typ === 'safe') {
+    if ($user['rolle'] !== 'mieter') {
+        http_response_code(403);
+        exit('Kein Zugriff.');
+    }
+    $stmt = $db->prepare("SELECT dateiname, wohnung_id FROM dokumentensafe WHERE id = ?");
+    $stmt->execute([$id]);
+    if ($row = $stmt->fetch()) {
+        if ((int)$row['wohnung_id'] !== (int)($user['wohnung_id'] ?? 0)) {
+            http_response_code(403);
+            exit('Kein Zugriff.');
+        }
+        $datei = UPLOAD_DOKUMENTENSAFE . str_replace(['..', '\\'], '', $row['dateiname']);
     }
 } elseif ($typ === 'rechnung') {
     if (in_array($user['rolle'], ['mieter', 'hausmeister'], true)) {

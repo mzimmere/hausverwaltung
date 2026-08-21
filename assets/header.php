@@ -66,7 +66,7 @@ if (($user['rolle'] ?? '') === 'hausmeister') {
 
 // Mieter-Sperre: nur die eigene Wohnungs-Ansicht, Einreichung und Konto
 if (($user['rolle'] ?? '') === 'mieter') {
-    $mieterErlaubt = ['meine_wohnung.php', 'einreichung.php', 'einreichung_datei.php', 'datei.php', 'passwort.php'];
+    $mieterErlaubt = ['meine_wohnung.php', 'einreichung.php', 'einreichung_datei.php', 'dokumentensafe.php', 'datei.php', 'passwort.php'];
     if (!in_array(basename($_SERVER['PHP_SELF']), $mieterErlaubt, true)) {
         header('Location: ' . ($basePath ?? '') . 'pages/meine_wohnung.php');
         exit;
@@ -82,6 +82,13 @@ $currentPage = basename($_SERVER['PHP_SELF']);
 // Versions-Badge in der Leiste und den CSS-Cache-Buster)
 // ------------------------------------------------------------
 $changelog = [
+    [
+        'version' => 'v60',
+        'datum'   => 'August 2026',
+        'punkte'  => [
+            'Neu für Mieter: Dokumentensafe (Menüpunkt) – private Ablage je Wohnung mit frei anlegbaren, umbenennbaren Kategorien (z.B. Belege, Bedienungsanleitungen, Bilder). Komplett getrennt von der Dokumentenverwaltung des Vermieters, ohne Bedeutung für die Nebenkostenabrechnung, nur für den jeweiligen Mieter selbst sichtbar',
+        ],
+    ],
     [
         'version' => 'v59',
         'datum'   => 'Juli 2026',
@@ -530,6 +537,8 @@ if (($user['rolle'] ?? '') === 'hausmeister') {
             '<path d="m3 9.5 9-7 9 7V20a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M9 22v-8h6v8"/>', ''],
         ['einreichung.php', 'Rechnung einreichen',
             '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>', ''],
+        ['dokumentensafe.php', 'Dokumentensafe',
+            '<rect x="3" y="11" width="18" height="10" rx="2"/><circle cx="12" cy="16" r="1.5"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>', ''],
     ];
 } elseif (function_exists('istAdmin') && istAdmin()) {
     // Admin: Freigabe- und Wartungs-Seite direkt hinter den Rechnungen einfügen
