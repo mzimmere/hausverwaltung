@@ -83,6 +83,13 @@ $currentPage = basename($_SERVER['PHP_SELF']);
 // ------------------------------------------------------------
 $changelog = [
     [
+        'version' => 'v61',
+        'datum'   => 'August 2026',
+        'punkte'  => [
+            'Dokumentensafe: Mieter können einzelne Dokumente/Bilder jetzt gezielt für die Hausverwaltung freigeben (z.B. ein Schadensfoto) – alles andere bleibt weiterhin privat. Freigegebene Einträge erscheinen unter Dokumente → "Vom Mieter freigegeben"',
+        ],
+    ],
+    [
         'version' => 'v60',
         'datum'   => 'August 2026',
         'punkte'  => [

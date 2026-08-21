@@ -43,14 +43,21 @@ if ($typ === 'dokument') {
         $datei = UPLOAD_DOKUMENTE . str_replace(['..', '\\'], '', $row['dateiname']);
     }
 } elseif ($typ === 'safe') {
-    if ($user['rolle'] !== 'mieter') {
-        http_response_code(403);
-        exit('Kein Zugriff.');
-    }
-    $stmt = $db->prepare("SELECT dateiname, wohnung_id FROM dokumentensafe WHERE id = ?");
+    $stmt = $db->prepare("
+        SELECT ds.dateiname, ds.wohnung_id, ds.freigegeben, w.objekt_id
+        FROM dokumentensafe ds JOIN wohnungen w ON ds.wohnung_id = w.id
+        WHERE ds.id = ?
+    ");
     $stmt->execute([$id]);
     if ($row = $stmt->fetch()) {
-        if ((int)$row['wohnung_id'] !== (int)($user['wohnung_id'] ?? 0)) {
+        if ($user['rolle'] === 'mieter') {
+            $erlaubt = (int)$row['wohnung_id'] === (int)($user['wohnung_id'] ?? 0);
+        } elseif (in_array($user['rolle'], ['admin', 'leser'], true)) {
+            $erlaubt = (int)$row['freigegeben'] === 1 && (int)$row['objekt_id'] === aktivesObjekt();
+        } else {
+            $erlaubt = false;
+        }
+        if (!$erlaubt) {
             http_response_code(403);
             exit('Kein Zugriff.');
         }

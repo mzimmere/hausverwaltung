@@ -98,6 +98,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['dok_hochladen'])) {
     }
 }
 
+// ── Freigabe an Vermieter umschalten ─────────────────────────
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['dok_freigabe_id'])) {
+    csrfPruefen();
+    $did = (int)$_POST['dok_freigabe_id'];
+    $stmt = $db->prepare("SELECT freigegeben FROM dokumentensafe WHERE id=? AND wohnung_id=?");
+    $stmt->execute([$did, $wohnungId]);
+    if ($row = $stmt->fetch()) {
+        $neu = (int)$row['freigegeben'] === 1 ? 0 : 1;
+        $db->prepare("UPDATE dokumentensafe SET freigegeben=? WHERE id=? AND wohnung_id=?")->execute([$neu, $did, $wohnungId]);
+        $successMsg = $neu ? 'Dokument für die Hausverwaltung freigegeben.' : 'Freigabe zurückgezogen.';
+    }
+}
+
 // ── Dokument löschen ──────────────────────────────────────────
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['dok_loeschen_id'])) {
     csrfPruefen();
@@ -140,8 +153,9 @@ include '../assets/header.php';
 <div class="page-header"><h1>Dokumentensafe</h1></div>
 <p style="color:var(--muted);font-size:.85rem;margin:-.5rem 0 1.25rem">
     Dein privater Ablageort für deine Wohnung – z.B. Kaufbelege, Bedienungsanleitungen oder Fotos.
-    Lege dir beliebig viele eigene Kategorien an. Diese Ablage ist nur für dich sichtbar und hat
-    keinerlei Bedeutung für die Nebenkostenabrechnung.
+    Lege dir beliebig viele eigene Kategorien an. Standardmäßig ist alles nur für dich sichtbar und hat
+    keinerlei Bedeutung für die Nebenkostenabrechnung. Einzelne Dokumente kannst du bei Bedarf gezielt
+    für die Hausverwaltung freigeben (z.B. ein Foto eines Schadens) – alles andere bleibt privat.
 </p>
 
 <?php if (!empty($successMsg)): ?><div class="alert alert-success"><?= htmlspecialchars($successMsg) ?></div><?php endif; ?>
@@ -207,14 +221,28 @@ include '../assets/header.php';
 
     <?php if ($dokumenteHier): ?>
     <div class="table-wrap"><table class="sortable">
-        <thead><tr><th>Bezeichnung</th><th>Datum</th><th></th></tr></thead>
+        <thead><tr><th>Bezeichnung</th><th>Datum</th><th>Freigabe</th><th></th></tr></thead>
         <tbody>
-        <?php foreach ($dokumenteHier as $d): ?>
+        <?php foreach ($dokumenteHier as $d): $freigegeben = (int)$d['freigegeben'] === 1; ?>
         <tr>
             <td><?= htmlspecialchars($d['bezeichnung']) ?></td>
             <td><?= date('d.m.Y', strtotime($d['hochgeladen_am'])) ?></td>
             <td>
+                <?php if ($freigegeben): ?>
+                <span class="badge badge-info">für Vermieter sichtbar</span>
+                <?php else: ?>
+                <span style="color:var(--muted);font-size:.82rem">privat</span>
+                <?php endif; ?>
+            </td>
+            <td>
                 <a href="datei.php?typ=safe&id=<?= $d['id'] ?>" target="_blank" class="btn btn-sm" style="background:var(--card-bg-high);color:var(--text)">📄 Ansehen</a>
+                <form method="post" style="display:inline">
+                    <?= csrfFeld() ?>
+                    <input type="hidden" name="dok_freigabe_id" value="<?= $d['id'] ?>">
+                    <button type="submit" class="btn btn-sm" style="background:var(--card-bg-high);color:var(--text)">
+                        <?= $freigegeben ? 'Freigabe zurückziehen' : 'Für Vermieter freigeben' ?>
+                    </button>
+                </form>
                 <form method="post" style="display:inline" onsubmit="return confirm('Dokument löschen?')">
                     <?= csrfFeld() ?>
                     <input type="hidden" name="dok_loeschen_id" value="<?= $d['id'] ?>">

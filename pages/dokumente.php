@@ -67,6 +67,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['edit_id'])) {
     }
 }
 
+// Vom Mieter freigegebene Dokumentensafe-Einträge (privat, außer explizit freigegeben)
+$safeStmt = $db->prepare("
+    SELECT ds.*, w.bezeichnung AS wohnung, dsk.bezeichnung AS kategorie
+    FROM dokumentensafe ds
+    JOIN wohnungen w ON ds.wohnung_id = w.id
+    JOIN dokumentensafe_kategorien dsk ON ds.kategorie_id = dsk.id
+    WHERE ds.freigegeben = 1 AND w.objekt_id = ?
+    ORDER BY ds.hochgeladen_am DESC
+");
+$safeStmt->execute([$objektId]);
+$freigegebeneSafeDokumente = $safeStmt->fetchAll();
+
 $kategorien = $db->query("SELECT * FROM dokument_kategorien")->fetchAll();
 $wStmt = $db->prepare("SELECT * FROM wohnungen WHERE aktiv=1 AND objekt_id=? ORDER BY id");
 $wStmt->execute([$objektId]);
@@ -119,6 +131,29 @@ include '../assets/header.php';
         </div>
         <div style="margin-top:1rem"><button type="submit" class="btn btn-primary">Hochladen</button></div>
     </form>
+</div>
+<?php endif; ?>
+
+<?php if ($freigegebeneSafeDokumente): ?>
+<div class="card">
+    <h2>Vom Mieter freigegeben (<?= count($freigegebeneSafeDokumente) ?>)</h2>
+    <p style="color:var(--muted);font-size:.85rem;margin-bottom:.75rem">
+        Einzelne Dokumente/Bilder aus dem privaten Dokumentensafe der Mieter, die diese ausdrücklich für dich freigegeben haben.
+    </p>
+    <div class="table-wrap"><table class="sortable">
+        <thead><tr><th>Bezeichnung</th><th>Wohnung</th><th>Kategorie</th><th>Datum</th><th></th></tr></thead>
+        <tbody>
+        <?php foreach ($freigegebeneSafeDokumente as $d): ?>
+        <tr>
+            <td><?= htmlspecialchars($d['bezeichnung']) ?></td>
+            <td><?= htmlspecialchars($d['wohnung']) ?></td>
+            <td><span class="badge badge-info"><?= htmlspecialchars($d['kategorie']) ?></span></td>
+            <td><?= date('d.m.Y', strtotime($d['hochgeladen_am'])) ?></td>
+            <td><a href="datei.php?typ=safe&id=<?= $d['id'] ?>" target="_blank" class="btn btn-sm" style="background:var(--card-bg-high);color:var(--text)">📄 Ansehen</a></td>
+        </tr>
+        <?php endforeach; ?>
+        </tbody>
+    </table></div>
 </div>
 <?php endif; ?>
 
