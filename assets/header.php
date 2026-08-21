@@ -83,6 +83,13 @@ $currentPage = basename($_SERVER['PHP_SELF']);
 // ------------------------------------------------------------
 $changelog = [
     [
+        'version' => 'v63',
+        'datum'   => 'August 2026',
+        'punkte'  => [
+            'Layout-Fehler behoben: der Hauptinhalt (Karten, Formulare) füllte auf breiten Bildschirmen nur einen schmalen Streifen statt den verfügbaren Platz – betraf alle Seiten seit dem Material-Design-Umbau',
+        ],
+    ],
+    [
         'version' => 'v62',
         'datum'   => 'August 2026',
         'punkte'  => [
@@ -703,7 +710,7 @@ if (isset($db) && (($user['rolle'] ?? '') === 'hausmeister' || (function_exists(
     .drawer-logout:hover { color: var(--danger); }
 
     /* App Bar */
-    .app-col { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+    .app-col { flex: 1; min-width: 0; }
     .appbar {
         height: 60px; flex-shrink: 0; display: flex; align-items: center; gap: .75rem;
         padding: 0 1.5rem; background: var(--bg); border-bottom: 1px solid var(--border);
