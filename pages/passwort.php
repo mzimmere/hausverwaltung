@@ -169,6 +169,32 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['toggle']) && istAdmin
     header('Location: passwort.php'); exit;
 }
 
+// ── Benutzer endgültig löschen (nicht nur sperren) ───────────
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_user']) && istAdmin()) {
+    csrfPruefen();
+    $did = (int)$_POST['delete_user'];
+    if ($did === (int)$benutzer['id']) {
+        $errorMsg = 'Das eigene Konto kann nicht gelöscht werden.';
+    } else {
+        $nameStmt = $db->prepare("SELECT benutzername FROM benutzer WHERE id=?");
+        $nameStmt->execute([$did]);
+        $gelName = $nameStmt->fetchColumn();
+        try {
+            $db->prepare("DELETE FROM benutzer WHERE id=?")->execute([$did]);
+            protokolliere('benutzer', 'loeschen', $did, "Benutzer \"$gelName\" endgültig gelöscht");
+            $successMsg = 'Benutzer wurde endgültig gelöscht.';
+        } catch (PDOException $e) {
+            if ((int)($e->errorInfo[1] ?? 0) === 1451) {
+                $errorMsg = 'Kann nicht gelöscht werden: Dieser Benutzer hat noch verknüpfte Daten '
+                    . '(z.B. eingereichte Rechnungen, erledigte Wartungsaufgaben oder Dokumente im Dokumentensafe). '
+                    . 'Bitte stattdessen sperren, oder erst die verknüpften Daten entfernen/umhängen.';
+            } else {
+                throw $e;
+            }
+        }
+    }
+}
+
 // Benutzerliste (nur Admin)
 $alleBenutzer = [];
 if (istAdmin()) {
@@ -405,6 +431,10 @@ function linkKopiertOk() {
                 <form method="post" style="display:inline" onsubmit="return confirm('Neuen Link für <?= htmlspecialchars($b['benutzername']) ?> erzeugen?<?= $b['link_offen'] ? ' Der bisherige offene Link wird dabei ungültig.' : '' ?>')"><?= csrfFeld() ?><input type="hidden" name="linkfuer" value="<?= $b['id'] ?>"><button type="submit" class="btn btn-sm btn-primary">🔗 Link</button></form>
                 <?php if ((int)$b['id'] !== (int)$benutzer['id']): ?>
                 <form method="post" style="display:inline" onsubmit="return confirm('<?= $b['aktiv'] ? 'Benutzer sperren?' : 'Benutzer aktivieren?' ?>')"><?= csrfFeld() ?><input type="hidden" name="toggle" value="<?= $b['id'] ?>"><button type="submit" class="btn btn-sm <?= $b['aktiv'] ? 'btn-danger' : 'btn-success' ?>"><?= $b['aktiv'] ? 'Sperren' : 'Aktivieren' ?></button></form>
+                <form method="post" style="display:inline" onsubmit="return confirm('Benutzer „<?= htmlspecialchars(addslashes($b['benutzername'])) ?>“ WIRKLICH ENDGÜLTIG löschen? Das kann nicht rückgängig gemacht werden – zum Sperren gibt es den Button daneben.')">
+                    <?= csrfFeld() ?><input type="hidden" name="delete_user" value="<?= $b['id'] ?>">
+                    <button type="submit" class="btn btn-sm btn-danger" title="Endgültig löschen">🗑️ Löschen</button>
+                </form>
                 <?php endif; ?>
             </td>
         </tr>

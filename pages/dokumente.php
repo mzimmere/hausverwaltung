@@ -94,6 +94,22 @@ $dStmt = $db->prepare("
 $dStmt->execute([$objektId]);
 $dokumente = $dStmt->fetchAll();
 
+// Für die Übersicht nach Wohnung gruppieren (aufklappbar) - "Allgemein /
+// Objekt" (kein wohnung_id) zuerst, danach jede Wohnung mit Dokumenten.
+$dokumenteJeWohnung = [];
+foreach ($dokumente as $d) {
+    $dokumenteJeWohnung[(int)($d['wohnung_id'] ?? 0)][] = $d;
+}
+$dokumentGruppen = [];
+if (isset($dokumenteJeWohnung[0])) {
+    $dokumentGruppen[] = ['name' => 'Allgemein / Objekt', 'dokumente' => $dokumenteJeWohnung[0]];
+}
+foreach ($wohnungen as $w) {
+    if (isset($dokumenteJeWohnung[(int)$w['id']])) {
+        $dokumentGruppen[] = ['name' => $w['bezeichnung'], 'dokumente' => $dokumenteJeWohnung[(int)$w['id']]];
+    }
+}
+
 include '../assets/header.php';
 ?>
 <div class="page-header"><h1>Dokumentenverwaltung</h1></div>
@@ -159,51 +175,58 @@ include '../assets/header.php';
 
 <div class="card">
     <h2>Alle Dokumente (<?= count($dokumente) ?>)</h2>
-    <div class="table-wrap"><table class="sortable">
-        <thead><tr><th>Bezeichnung</th><th>Kategorie</th><th>Wohnung</th><th>Sichtbar für</th><th>Jahr</th><th>Datum</th><th></th></tr></thead>
-        <tbody>
-        <?php foreach ($dokumente as $d): ?>
-        <tr>
-            <td><?= htmlspecialchars($d['bezeichnung']) ?></td>
-            <td><span class="badge badge-info"><?= htmlspecialchars($d['kategorie']) ?></span></td>
-            <?php if (istNurLesend()): ?>
-            <td><?= htmlspecialchars($d['wohnung'] ?? 'Alle / Objekt') ?></td>
-            <td><?= htmlspecialchars(ucfirst($d['freigabe'] ?? 'verwaltung')) ?></td>
-            <?php else: ?>
-            <td>
-                <select name="wohnung_id" form="doku-edit-<?= $d['id'] ?>"
-                        style="border:1px solid var(--border);border-radius:5px;padding:.3rem .4rem;font-size:.82rem;background:var(--input-bg);color:var(--text);max-width:150px">
-                    <option value="">Alle / Objekt</option>
-                    <?php foreach ($wohnungen as $w): ?>
-                    <option value="<?= $w['id'] ?>"<?= (int)($d['wohnung_id'] ?? 0) === (int)$w['id'] ? ' selected' : '' ?>><?= htmlspecialchars($w['bezeichnung']) ?></option>
-                    <?php endforeach; ?>
-                </select>
-            </td>
-            <td>
-                <select name="freigabe" form="doku-edit-<?= $d['id'] ?>"
-                        style="border:1px solid var(--border);border-radius:5px;padding:.3rem .4rem;font-size:.82rem;background:var(--input-bg);color:var(--text)">
-                    <option value="verwaltung"<?= ($d['freigabe'] ?? 'verwaltung') === 'verwaltung' ? ' selected' : '' ?>>Verwaltung</option>
-                    <option value="mieter"<?= ($d['freigabe'] ?? '') === 'mieter' ? ' selected' : '' ?>>+ Mieter</option>
-                    <option value="hausmeister"<?= ($d['freigabe'] ?? '') === 'hausmeister' ? ' selected' : '' ?>>+ Hausmeister</option>
-                </select>
-            </td>
-            <?php endif; ?>
-            <td><?= $d['jahr'] ?? '–' ?></td>
-            <td><?= date('d.m.Y', strtotime($d['hochgeladen_am'])) ?></td>
-            <td>
-                <?php if (!istNurLesend()): ?>
-                <form method="post" id="doku-edit-<?= $d['id'] ?>" style="display:inline"><?= csrfFeld() ?><input type="hidden" name="edit_id" value="<?= $d['id'] ?>"><button type="submit" class="btn btn-sm btn-success" title="Zuordnung speichern">💾</button></form>
+    <?php if (!$dokumentGruppen): ?>
+    <p style="color:var(--muted)">Keine Dokumente</p>
+    <?php endif; ?>
+    <?php foreach ($dokumentGruppen as $gruppe): ?>
+    <details class="dok-gruppe">
+        <summary class="dok-gruppe-titel">
+            🏠 <?= htmlspecialchars($gruppe['name']) ?>
+            <span class="dok-gruppe-anzahl"><?= count($gruppe['dokumente']) ?></span>
+        </summary>
+        <div class="table-wrap"><table class="sortable">
+            <thead><tr><th>Bezeichnung</th><th>Kategorie</th><th><?= istNurLesend() ? 'Sichtbar für' : 'Wohnung / Sichtbar für' ?></th><th>Jahr</th><th>Datum</th><th></th></tr></thead>
+            <tbody>
+            <?php foreach ($gruppe['dokumente'] as $d): ?>
+            <tr>
+                <td><?= htmlspecialchars($d['bezeichnung']) ?></td>
+                <td><span class="badge badge-info"><?= htmlspecialchars($d['kategorie']) ?></span></td>
+                <?php if (istNurLesend()): ?>
+                <td><?= htmlspecialchars(ucfirst($d['freigabe'] ?? 'verwaltung')) ?></td>
+                <?php else: ?>
+                <td>
+                    <select name="wohnung_id" form="doku-edit-<?= $d['id'] ?>"
+                            style="border:1px solid var(--border);border-radius:5px;padding:.3rem .4rem;font-size:.82rem;background:var(--input-bg);color:var(--text);max-width:150px">
+                        <option value="">Alle / Objekt</option>
+                        <?php foreach ($wohnungen as $w): ?>
+                        <option value="<?= $w['id'] ?>"<?= (int)($d['wohnung_id'] ?? 0) === (int)$w['id'] ? ' selected' : '' ?>><?= htmlspecialchars($w['bezeichnung']) ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                    <select name="freigabe" form="doku-edit-<?= $d['id'] ?>"
+                            style="border:1px solid var(--border);border-radius:5px;padding:.3rem .4rem;font-size:.82rem;background:var(--input-bg);color:var(--text);margin-top:.3rem">
+                        <option value="verwaltung"<?= ($d['freigabe'] ?? 'verwaltung') === 'verwaltung' ? ' selected' : '' ?>>Verwaltung</option>
+                        <option value="mieter"<?= ($d['freigabe'] ?? '') === 'mieter' ? ' selected' : '' ?>>+ Mieter</option>
+                        <option value="hausmeister"<?= ($d['freigabe'] ?? '') === 'hausmeister' ? ' selected' : '' ?>>+ Hausmeister</option>
+                    </select>
+                </td>
                 <?php endif; ?>
-                <a href="datei.php?typ=dokument&id=<?= $d['id'] ?>" target="_blank" class="btn btn-sm" style="background:var(--card-bg-high);color:var(--text)">📄</a>
-                <?php if (!istNurLesend()): ?>
-                <form method="post" style="display:inline" onsubmit="return confirm('Löschen?')"><?= csrfFeld() ?><input type="hidden" name="delete_id" value="<?= $d['id'] ?>"><button type="submit" class="btn btn-sm btn-danger">✕</button></form>
-                <?php endif; ?>
-            </td>
-        </tr>
-        <?php endforeach; ?>
-        <?php if (!$dokumente): ?><tr><td colspan="7" class="text-center" style="color:var(--muted)">Keine Dokumente</td></tr><?php endif; ?>
-        </tbody>
-    </table></div>
+                <td><?= $d['jahr'] ?? '–' ?></td>
+                <td><?= date('d.m.Y', strtotime($d['hochgeladen_am'])) ?></td>
+                <td>
+                    <?php if (!istNurLesend()): ?>
+                    <form method="post" id="doku-edit-<?= $d['id'] ?>" style="display:inline"><?= csrfFeld() ?><input type="hidden" name="edit_id" value="<?= $d['id'] ?>"><button type="submit" class="btn btn-sm btn-success" title="Zuordnung speichern">💾</button></form>
+                    <?php endif; ?>
+                    <a href="datei.php?typ=dokument&id=<?= $d['id'] ?>" target="_blank" class="btn btn-sm" style="background:var(--card-bg-high);color:var(--text)">📄</a>
+                    <?php if (!istNurLesend()): ?>
+                    <form method="post" style="display:inline" onsubmit="return confirm('Löschen?')"><?= csrfFeld() ?><input type="hidden" name="delete_id" value="<?= $d['id'] ?>"><button type="submit" class="btn btn-sm btn-danger">✕</button></form>
+                    <?php endif; ?>
+                </td>
+            </tr>
+            <?php endforeach; ?>
+            </tbody>
+        </table></div>
+    </details>
+    <?php endforeach; ?>
 </div>
 
 <?php include '../assets/footer.php'; ?>

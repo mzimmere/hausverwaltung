@@ -333,3 +333,23 @@ th.th-sortierbar.sort-desc::after { content: '▼'; opacity: 1; color: var(--pri
     min-width: 220px;
 }
 .tabellen-suche.offen .tabellen-suche-feld { display: inline-block; }
+
+/* Aufklappbare Gruppen (z.B. Dokumente je Wohnung) */
+.dok-gruppe { border: 1px solid var(--border); border-radius: 12px; margin-bottom: .75rem; overflow: hidden; }
+.dok-gruppe:last-of-type { margin-bottom: 0; }
+.dok-gruppe-titel {
+    display: flex; align-items: center; gap: .6rem;
+    padding: .75rem 1rem; cursor: pointer; font-weight: 500;
+    background: var(--card-bg-high); list-style: none; user-select: none;
+}
+.dok-gruppe-titel::-webkit-details-marker { display: none; }
+.dok-gruppe-titel::before {
+    content: '▶'; font-size: .7rem; color: var(--muted);
+    transition: transform .15s;
+}
+.dok-gruppe[open] > .dok-gruppe-titel::before { transform: rotate(90deg); }
+.dok-gruppe-anzahl {
+    margin-left: auto; font-size: .76rem; font-weight: 600; color: var(--muted);
+    background: var(--card-bg); border-radius: 999px; padding: .1rem .6rem;
+}
+.dok-gruppe .table-wrap { padding: .75rem 1rem 1rem; }

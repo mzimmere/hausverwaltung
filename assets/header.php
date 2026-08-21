@@ -83,6 +83,14 @@ $currentPage = basename($_SERVER['PHP_SELF']);
 // ------------------------------------------------------------
 $changelog = [
     [
+        'version' => 'v62',
+        'datum'   => 'August 2026',
+        'punkte'  => [
+            'Dokumente: "Alle Dokumente" ist jetzt nach Wohnung gruppiert und aufklappbar, statt einer langen Tabelle',
+            'Benutzerverwaltung: Benutzer können jetzt endgültig gelöscht werden, nicht mehr nur gesperrt (blockiert automatisch, falls noch verknüpfte Einreichungen/Wartungsaufgaben/Dokumente bestehen – dann bitte erst diese entfernen oder den Benutzer weiter sperren)',
+        ],
+    ],
+    [
         'version' => 'v61',
         'datum'   => 'August 2026',
         'punkte'  => [
