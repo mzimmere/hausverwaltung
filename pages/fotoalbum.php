@@ -8,6 +8,7 @@ require_once '../config/config.php';
 require_once '../config/auth.php';
 requireLogin('../');
 require_once '../config/database.php';
+require_once '../includes/bildkonvertierung.php';
 $pageTitle = 'Fotoalbum';
 $basePath  = '../';
 
@@ -17,7 +18,7 @@ if (!in_array($user['rolle'], ['admin', 'leser', 'mieter'], true)) {
     exit;
 }
 
-$erlaubteExt = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
+$erlaubteExt = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'heic', 'heif', 'dng'];
 
 // ============================================================
 // Mieter: reine Ansicht der für die eigene Wohnung freigegebenen Fotos
@@ -51,9 +52,15 @@ if ($user['rolle'] === 'mieter') {
     <div class="card">
         <h2><?= htmlspecialchars($katName) ?></h2>
         <div class="fotoalbum-grid">
-            <?php foreach ($katBilder as $b): ?>
+            <?php foreach ($katBilder as $b):
+                $hatVorschau = $b['vorschau_dateiname'] || istBrowserAnzeigbaresBild($b['dateiname']);
+            ?>
             <a href="datei.php?typ=fotoalbum&id=<?= $b['id'] ?>" target="_blank" class="fotoalbum-kachel">
-                <img src="datei.php?typ=fotoalbum&id=<?= $b['id'] ?>" alt="<?= htmlspecialchars($b['bezeichnung']) ?>" loading="lazy">
+                <?php if ($hatVorschau): ?>
+                <img src="datei.php?typ=fotoalbum&id=<?= $b['id'] ?>&vorschau=1" alt="<?= htmlspecialchars($b['bezeichnung']) ?>" loading="lazy">
+                <?php else: ?>
+                <span class="fotoalbum-keine-vorschau">📷<small><?= strtoupper(pathinfo($b['dateiname'], PATHINFO_EXTENSION)) ?></small></span>
+                <?php endif; ?>
                 <span class="fotoalbum-kachel-titel"><?= htmlspecialchars($b['bezeichnung']) ?></span>
             </a>
             <?php endforeach; ?>
@@ -132,19 +139,34 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['bild_hochladen'])) {
         $errorMsg = 'Bitte eine gültige Kategorie wählen.';
     } elseif ($bezeich === '') {
         $errorMsg = 'Bitte eine Bezeichnung angeben.';
+    } elseif (in_array($_FILES['bild']['error'] ?? UPLOAD_ERR_OK, [UPLOAD_ERR_INI_SIZE, UPLOAD_ERR_FORM_SIZE], true)) {
+        $errorMsg = 'Die Datei ist zu groß für die Server-Konfiguration (betrifft v.a. DNG-Rohdaten).';
     } elseif (empty($_FILES['bild']['name'])) {
         $errorMsg = 'Bitte ein Bild auswählen.';
     } else {
         $ext = strtolower(pathinfo($_FILES['bild']['name'], PATHINFO_EXTENSION));
         if (!in_array($ext, $erlaubteExt, true)) {
-            $errorMsg = 'Dieser Dateityp wird nicht unterstützt (nur Bilder).';
+            $errorMsg = 'Dieser Dateityp wird nicht unterstützt (nur Bilder, auch HEIC/DNG).';
         } else {
             $zielDir = UPLOAD_FOTOALBUM . $objektId . '/';
             if (!is_dir($zielDir)) mkdir($zielDir, 0777, true);
-            $dateiname = date('Ymd_His') . '_' . bin2hex(random_bytes(4)) . '_' . preg_replace('/[^a-zA-Z0-9._-]/', '_', $_FILES['bild']['name']);
+            $basisname = date('Ymd_His') . '_' . bin2hex(random_bytes(4));
+            $dateiname = $basisname . '_' . preg_replace('/[^a-zA-Z0-9._-]/', '_', $_FILES['bild']['name']);
             move_uploaded_file($_FILES['bild']['tmp_name'], $zielDir . $dateiname);
-            $stmt = $db->prepare("INSERT INTO fotoalbum_bilder (objekt_id, kategorie_id, bezeichnung, dateiname, hochgeladen_von) VALUES (?,?,?,?,?)");
-            $stmt->execute([$objektId, $katId, $bezeich, $objektId . '/' . $dateiname, $user['id']]);
+
+            // Für Formate, die Browser nicht direkt anzeigen können (HEIC/DNG),
+            // zusätzlich ein JPEG-Vorschaubild erzeugen, falls der Server das
+            // unterstützt. Original bleibt in jedem Fall erhalten.
+            $vorschauDateiname = null;
+            if (in_array($ext, NICHT_BROWSER_ANZEIGBARE_BILDFORMATE, true)) {
+                $vorschauName = $basisname . '_vorschau.jpg';
+                if (bildVorschauErzeugen($zielDir . $dateiname, $zielDir . $vorschauName)) {
+                    $vorschauDateiname = $objektId . '/' . $vorschauName;
+                }
+            }
+
+            $stmt = $db->prepare("INSERT INTO fotoalbum_bilder (objekt_id, kategorie_id, bezeichnung, dateiname, vorschau_dateiname, hochgeladen_von) VALUES (?,?,?,?,?,?)");
+            $stmt->execute([$objektId, $katId, $bezeich, $objektId . '/' . $dateiname, $vorschauDateiname, $user['id']]);
             $neuId = (int)$db->lastInsertId();
             if ($sichtbarFuer) {
                 $sichtStmt = $db->prepare("INSERT INTO fotoalbum_sichtbarkeit (bild_id, wohnung_id) VALUES (?,?)");
@@ -234,6 +256,9 @@ include '../assets/header.php';
 <div class="page-header"><h1>Fotoalbum</h1></div>
 <p style="color:var(--muted);font-size:.85rem;margin:-.5rem 0 1.25rem">
     Vom Vermieter gepflegtes Fotoalbum fürs ganze Haus. Pro Foto legst du fest, welche Wohnungen (Mieter) es sehen dürfen.
+    Auch HEIC (iPhone-Fotos) und DNG (Kamera-Rohdaten) können hochgeladen werden – für die Vorschau wird automatisch ein
+    JPEG erzeugt, sofern der Server das unterstützt; falls nicht, wird nur das 📷-Symbol angezeigt, das Original bleibt
+    aber immer per Klick als Download verfügbar.
 </p>
 
 <?php if (!istNurLesend()): ?>
@@ -264,7 +289,7 @@ include '../assets/header.php';
                 </select>
             </div>
             <div class="form-group"><label>Bezeichnung *</label><input type="text" name="bezeichnung" placeholder="z.B. Neuer Anstrich Treppenhaus" required></div>
-            <div class="form-group"><label>Bild *</label><input type="file" name="bild" accept="image/*" required></div>
+            <div class="form-group"><label>Bild *</label><input type="file" name="bild" accept="image/*,.heic,.heif,.dng" required></div>
         </div>
         <div class="form-group" style="margin-top:1rem">
             <label>Sichtbar für</label>
@@ -319,10 +344,15 @@ include '../assets/header.php';
                 <?php foreach ($bilderHier as $b):
                     $sichtbarIds = $sichtbarkeitJeBild[(int)$b['id']] ?? [];
                     $sichtbarNamen = array_map(fn($w) => $w['bezeichnung'], array_filter($wohnungen, fn($w) => in_array((int)$w['id'], $sichtbarIds, true)));
+                    $hatVorschau = $b['vorschau_dateiname'] || istBrowserAnzeigbaresBild($b['dateiname']);
                 ?>
                 <div class="fotoalbum-kachel">
                     <a href="datei.php?typ=fotoalbum&id=<?= $b['id'] ?>" target="_blank">
-                        <img src="datei.php?typ=fotoalbum&id=<?= $b['id'] ?>" alt="<?= htmlspecialchars($b['bezeichnung']) ?>" loading="lazy">
+                        <?php if ($hatVorschau): ?>
+                        <img src="datei.php?typ=fotoalbum&id=<?= $b['id'] ?>&vorschau=1" alt="<?= htmlspecialchars($b['bezeichnung']) ?>" loading="lazy">
+                        <?php else: ?>
+                        <span class="fotoalbum-keine-vorschau">📷<small><?= strtoupper(pathinfo($b['dateiname'], PATHINFO_EXTENSION)) ?></small></span>
+                        <?php endif; ?>
                     </a>
                     <span class="fotoalbum-kachel-titel"><?= htmlspecialchars($b['bezeichnung']) ?></span>
                     <span style="font-size:.72rem;color:var(--muted);display:block;padding:0 .1rem">

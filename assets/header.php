@@ -83,6 +83,13 @@ $currentPage = basename($_SERVER['PHP_SELF']);
 // ------------------------------------------------------------
 $changelog = [
     [
+        'version' => 'v66',
+        'datum'   => 'August 2026',
+        'punkte'  => [
+            'Fotoalbum: HEIC (iPhone-Fotos) und DNG (Kamera-Rohdaten) können jetzt hochgeladen werden. Für die Vorschau wird automatisch ein JPEG erzeugt, falls der Server das unterstützt (PHP-Erweiterung "imagick") – das Original bleibt in jedem Fall als Download erhalten, auch ohne Vorschau',
+        ],
+    ],
+    [
         'version' => 'v65',
         'datum'   => 'August 2026',
         'punkte'  => [

@@ -66,7 +66,7 @@ if ($typ === 'dokument') {
         $datei = UPLOAD_DOKUMENTENSAFE . str_replace(['..', '\\'], '', $row['dateiname']);
     }
 } elseif ($typ === 'fotoalbum') {
-    $stmt = $db->prepare("SELECT dateiname, objekt_id FROM fotoalbum_bilder WHERE id = ?");
+    $stmt = $db->prepare("SELECT dateiname, vorschau_dateiname, objekt_id FROM fotoalbum_bilder WHERE id = ?");
     $stmt->execute([$id]);
     if ($row = $stmt->fetch()) {
         if (in_array($user['rolle'], ['admin', 'leser'], true)) {
@@ -82,7 +82,12 @@ if ($typ === 'dokument') {
             http_response_code(403);
             exit('Kein Zugriff.');
         }
-        $datei = UPLOAD_FOTOALBUM . str_replace(['..', '\\'], '', $row['dateiname']);
+        // Für die Vorschau (Miniaturbild) das erzeugte JPEG nehmen, falls
+        // vorhanden (HEIC/DNG) - sonst bzw. beim Original-Download immer
+        // die tatsächlich hochgeladene Datei.
+        $wantVorschau = isset($_GET['vorschau']);
+        $relDatei = ($wantVorschau && $row['vorschau_dateiname']) ? $row['vorschau_dateiname'] : $row['dateiname'];
+        $datei = UPLOAD_FOTOALBUM . str_replace(['..', '\\'], '', $relDatei);
     }
 } elseif ($typ === 'rechnung') {
     if (in_array($user['rolle'], ['mieter', 'hausmeister'], true)) {
@@ -113,6 +118,9 @@ $mime = [
     'png'  => 'image/png',
     'gif'  => 'image/gif',
     'webp' => 'image/webp',
+    'heic' => 'image/heic',
+    'heif' => 'image/heif',
+    'dng'  => 'image/x-adobe-dng',
     'doc'  => 'application/msword',
     'docx' => 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
     'xls'  => 'application/vnd.ms-excel',
