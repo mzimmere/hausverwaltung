@@ -83,6 +83,13 @@ $currentPage = basename($_SERVER['PHP_SELF']);
 // ------------------------------------------------------------
 $changelog = [
     [
+        'version' => 'v64',
+        'datum'   => 'August 2026',
+        'punkte'  => [
+            'Dokumente: die aufklappbaren Wohnungs-Gruppen zeigen jetzt zusätzlich den aktuellen Mieter an (z.B. "OG – Philipp Fischer")',
+        ],
+    ],
+    [
         'version' => 'v63',
         'datum'   => 'August 2026',
         'punkte'  => [

@@ -106,7 +106,8 @@ if (isset($dokumenteJeWohnung[0])) {
 }
 foreach ($wohnungen as $w) {
     if (isset($dokumenteJeWohnung[(int)$w['id']])) {
-        $dokumentGruppen[] = ['name' => $w['bezeichnung'], 'dokumente' => $dokumenteJeWohnung[(int)$w['id']]];
+        $name = $w['bezeichnung'] . (!empty($w['mieter_name']) ? ' – ' . $w['mieter_name'] : '');
+        $dokumentGruppen[] = ['name' => $name, 'dokumente' => $dokumenteJeWohnung[(int)$w['id']]];
     }
 }
 
