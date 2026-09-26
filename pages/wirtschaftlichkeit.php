@@ -123,6 +123,27 @@ $gesamtKostenHaus = $summeEigKosten + $summeUmlegbar; // Vollkosten, unabhängig
 $ergebnisVorUmlage = $summeMiete - $summeEigKosten;     // reiner Eigentümer-Cashflow (steuerpflichtig)
 $ergebnisGesamt    = $summeMiete - $gesamtKostenHaus;   // theoretisch falls nichts umgelegt würde
 
+// ── Für die Übersicht nach Monat gruppieren (aufklappbar) ────
+// Setzt voraus, dass $rows bereits nach Datum absteigend sortiert sind
+// (ist bei $mieteinnahmen/$eigKosten der Fall) - dann ergeben sich die
+// Monats-Gruppen automatisch in derselben absteigenden Reihenfolge.
+$monatsNamen = [1=>'Januar',2=>'Februar',3=>'März',4=>'April',5=>'Mai',6=>'Juni',7=>'Juli',8=>'August',9=>'September',10=>'Oktober',11=>'November',12=>'Dezember'];
+function monatsGruppen(array $rows, string $datumFeld, array $monatsNamen): array {
+    $gruppen = [];
+    foreach ($rows as $r) {
+        $ts  = strtotime($r[$datumFeld]);
+        $key = date('Y-m', $ts);
+        if (!isset($gruppen[$key])) {
+            $gruppen[$key] = ['label' => $monatsNamen[(int)date('n', $ts)] . ' ' . date('Y', $ts), 'eintraege' => []];
+        }
+        $gruppen[$key]['eintraege'][] = $r;
+    }
+    return $gruppen;
+}
+$aktuellerMonatSchluessel = date('Y-m');
+$mieteinnahmenGruppen = monatsGruppen($mieteinnahmen, 'datum', $monatsNamen);
+$eigKostenGruppen     = monatsGruppen($eigKosten, 'datum', $monatsNamen);
+
 include '../assets/header.php';
 ?>
 
@@ -273,23 +294,33 @@ include '../assets/header.php';
 
 <div class="card">
     <h2>Mieteinnahmen <?= $filterJahr ?> – Summe: <?= number_format($summeMiete,2,',','.') ?> €</h2>
-    <div class="table-wrap"><table class="sortable">
-        <thead><tr><th>Datum</th><th>Wohnung</th><th>Beschreibung</th><th class="text-right">Betrag</th><?= istNurLesend() ? '' : '<th></th>' ?></tr></thead>
-        <tbody>
-        <?php foreach ($mieteinnahmen as $m): ?>
-        <tr>
-            <td><?= date('d.m.Y', strtotime($m['datum'])) ?></td>
-            <td><?= htmlspecialchars($m['wohnung']) ?></td>
-            <td><?= htmlspecialchars($m['beschreibung']) ?></td>
-            <td class="text-right" style="color:var(--success)"><?= number_format($m['betrag'],2,',','.') ?> €</td>
-            <?php if (!istNurLesend()): ?>
-            <td><a href="?delete_miete=<?= $m['id'] ?>&jahr=<?= $filterJahr ?>" class="btn btn-sm btn-danger" onclick="return confirm('Löschen?')">✕</a></td>
-            <?php endif; ?>
-        </tr>
-        <?php endforeach; ?>
-        <?php if (!$mieteinnahmen): ?><tr><td colspan="5" class="text-center" style="color:var(--muted)">Keine Einträge</td></tr><?php endif; ?>
-        </tbody>
-    </table></div>
+    <?php if (!$mieteinnahmenGruppen): ?>
+    <p style="color:var(--muted)">Keine Einträge</p>
+    <?php endif; ?>
+    <?php foreach ($mieteinnahmenGruppen as $schluessel => $gruppe): ?>
+    <details class="dok-gruppe"<?= $schluessel === $aktuellerMonatSchluessel ? ' open' : '' ?>>
+        <summary class="dok-gruppe-titel">
+            <?= htmlspecialchars($gruppe['label']) ?>
+            <span class="dok-gruppe-anzahl"><?= count($gruppe['eintraege']) ?></span>
+        </summary>
+        <div class="table-wrap"><table class="sortable">
+            <thead><tr><th>Datum</th><th>Wohnung</th><th>Beschreibung</th><th class="text-right">Betrag</th><?= istNurLesend() ? '' : '<th></th>' ?></tr></thead>
+            <tbody>
+            <?php foreach ($gruppe['eintraege'] as $m): ?>
+            <tr>
+                <td><?= date('d.m.Y', strtotime($m['datum'])) ?></td>
+                <td><?= htmlspecialchars($m['wohnung']) ?></td>
+                <td><?= htmlspecialchars($m['beschreibung']) ?></td>
+                <td class="text-right" style="color:var(--success)"><?= number_format($m['betrag'],2,',','.') ?> €</td>
+                <?php if (!istNurLesend()): ?>
+                <td><a href="?delete_miete=<?= $m['id'] ?>&jahr=<?= $filterJahr ?>" class="btn btn-sm btn-danger" onclick="return confirm('Löschen?')">✕</a></td>
+                <?php endif; ?>
+            </tr>
+            <?php endforeach; ?>
+            </tbody>
+        </table></div>
+    </details>
+    <?php endforeach; ?>
 </div>
 
 <?php if (!istNurLesend()): ?>
@@ -332,24 +363,34 @@ include '../assets/header.php';
 
 <div class="card">
     <h2>Nicht umlegbare Kosten <?= $filterJahr ?> – Summe: <?= number_format($summeEigKosten,2,',','.') ?> €</h2>
-    <div class="table-wrap"><table class="sortable">
-        <thead><tr><th>Datum</th><th>Kategorie</th><th>Beschreibung</th><th class="text-right">Betrag</th><th>Beleg</th><?= istNurLesend() ? '' : '<th></th>' ?></tr></thead>
-        <tbody>
-        <?php foreach ($eigKosten as $e): ?>
-        <tr>
-            <td><?= date('d.m.Y', strtotime($e['datum'])) ?></td>
-            <td><span class="badge badge-warning"><?= htmlspecialchars($e['kategorie']) ?></span></td>
-            <td><?= htmlspecialchars($e['beschreibung']) ?></td>
-            <td class="text-right" style="color:var(--danger)"><?= number_format($e['betrag'],2,',','.') ?> €</td>
-            <td><?php if ($e['dateiname']): ?><a href="../uploads/eigentuemerkosten/<?= $e['jahr'].'/'.$e['dateiname'] ?>" target="_blank" class="btn btn-sm" style="background:var(--card-bg-high);color:var(--text)">📄</a><?php endif; ?></td>
-            <?php if (!istNurLesend()): ?>
-            <td><a href="?delete_kosten=<?= $e['id'] ?>&jahr=<?= $filterJahr ?>" class="btn btn-sm btn-danger" onclick="return confirm('Löschen?')">✕</a></td>
-            <?php endif; ?>
-        </tr>
-        <?php endforeach; ?>
-        <?php if (!$eigKosten): ?><tr><td colspan="6" class="text-center" style="color:var(--muted)">Keine Einträge</td></tr><?php endif; ?>
-        </tbody>
-    </table></div>
+    <?php if (!$eigKostenGruppen): ?>
+    <p style="color:var(--muted)">Keine Einträge</p>
+    <?php endif; ?>
+    <?php foreach ($eigKostenGruppen as $schluessel => $gruppe): ?>
+    <details class="dok-gruppe"<?= $schluessel === $aktuellerMonatSchluessel ? ' open' : '' ?>>
+        <summary class="dok-gruppe-titel">
+            <?= htmlspecialchars($gruppe['label']) ?>
+            <span class="dok-gruppe-anzahl"><?= count($gruppe['eintraege']) ?></span>
+        </summary>
+        <div class="table-wrap"><table class="sortable">
+            <thead><tr><th>Datum</th><th>Kategorie</th><th>Beschreibung</th><th class="text-right">Betrag</th><th>Beleg</th><?= istNurLesend() ? '' : '<th></th>' ?></tr></thead>
+            <tbody>
+            <?php foreach ($gruppe['eintraege'] as $e): ?>
+            <tr>
+                <td><?= date('d.m.Y', strtotime($e['datum'])) ?></td>
+                <td><span class="badge badge-warning"><?= htmlspecialchars($e['kategorie']) ?></span></td>
+                <td><?= htmlspecialchars($e['beschreibung']) ?></td>
+                <td class="text-right" style="color:var(--danger)"><?= number_format($e['betrag'],2,',','.') ?> €</td>
+                <td><?php if ($e['dateiname']): ?><a href="../uploads/eigentuemerkosten/<?= $e['jahr'].'/'.$e['dateiname'] ?>" target="_blank" class="btn btn-sm" style="background:var(--card-bg-high);color:var(--text)">📄</a><?php endif; ?></td>
+                <?php if (!istNurLesend()): ?>
+                <td><a href="?delete_kosten=<?= $e['id'] ?>&jahr=<?= $filterJahr ?>" class="btn btn-sm btn-danger" onclick="return confirm('Löschen?')">✕</a></td>
+                <?php endif; ?>
+            </tr>
+            <?php endforeach; ?>
+            </tbody>
+        </table></div>
+    </details>
+    <?php endforeach; ?>
 </div>
 
 <?php include '../assets/footer.php'; ?>

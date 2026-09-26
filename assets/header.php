@@ -83,6 +83,13 @@ $currentPage = basename($_SERVER['PHP_SELF']);
 // ------------------------------------------------------------
 $changelog = [
     [
+        'version' => 'v67',
+        'datum'   => 'September 2026',
+        'punkte'  => [
+            'Wirtschaftlichkeit: Mieteinnahmen und nicht umlegbare Kosten sind jetzt nach Monat aufklappbar gruppiert statt einer langen Tabelle – der aktuelle Monat ist standardmäßig aufgeklappt',
+        ],
+    ],
+    [
         'version' => 'v66',
         'datum'   => 'August 2026',
         'punkte'  => [
