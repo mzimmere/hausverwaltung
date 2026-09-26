@@ -158,6 +158,21 @@ $rechnungen->execute([$filterJahr, $objektId]);
 $rechnungen = $rechnungen->fetchAll();
 $summe = array_sum(array_column($rechnungen, 'betrag'));
 
+// ── Für die Übersicht nach Monat gruppieren (aufklappbar) ────
+// $rechnungen ist bereits nach Datum absteigend sortiert - die
+// Monats-Gruppen ergeben sich dadurch automatisch in derselben Reihenfolge.
+$monatsNamenRe = [1=>'Januar',2=>'Februar',3=>'März',4=>'April',5=>'Mai',6=>'Juni',7=>'Juli',8=>'August',9=>'September',10=>'Oktober',11=>'November',12=>'Dezember'];
+$rechnungenGruppen = [];
+foreach ($rechnungen as $r) {
+    $ts  = strtotime($r['datum']);
+    $key = date('Y-m', $ts);
+    if (!isset($rechnungenGruppen[$key])) {
+        $rechnungenGruppen[$key] = ['label' => $monatsNamenRe[(int)date('n', $ts)] . ' ' . date('Y', $ts), 'eintraege' => []];
+    }
+    $rechnungenGruppen[$key]['eintraege'][] = $r;
+}
+$aktuellerMonatSchluesselRe = date('Y-m');
+
 // Gruppen-Zuordnungen je Rechnung vorladen (für die Anzeige)
 $gruppenJeRechnung = [];
 if ($rechnungen) {
@@ -398,38 +413,48 @@ function positionTypAendern(select) {
 
 <div class="card">
     <h2>Rechnungen <?= $filterJahr ?> – Gesamt: <?= number_format($summe,2,',','.') ?> &euro;</h2>
-    <div class="table-wrap"><table class="sortable">
-        <thead><tr><th>Datum</th><th>Kostenart</th><th>Zuordnung</th><th>Beschreibung</th><th class="text-right">Betrag</th><th>Datei</th><th></th></tr></thead>
-        <tbody>
-        <?php foreach ($rechnungen as $r): ?>
-        <tr>
-            <td><?= date('d.m.Y', strtotime($r['datum'])) ?></td>
-            <td><?= htmlspecialchars($r['kostenart']) ?></td>
-            <td>
-                <?php if (!empty($gruppenJeRechnung[$r['id']])): ?>
-                <span class="badge badge-warning" title="<?php
-                    $teile = [];
-                    foreach ($gruppenJeRechnung[$r['id']] as $g) {
-                        $anteilText = ((float)$g['anteil'] >= 1.0) ? 'voller Betrag' : round($g['anteil']*100,1) . '%';
-                        $teile[] = htmlspecialchars($g['wohnung']) . ' (' . $anteilText . ')';
-                    }
-                    echo implode(', ', $teile);
-                ?>">Gruppe: <?= count($gruppenJeRechnung[$r['id']]) ?> Wohnungen</span>
-                <?php elseif ($r['wohnung']): ?>
-                <span class="badge badge-warning">nur <?= htmlspecialchars($r['wohnung']) ?></span>
-                <?php else: ?>
-                <span class="badge badge-info">umgelegt</span>
-                <?php endif; ?>
-            </td>
-            <td><?= htmlspecialchars($r['beschreibung']) ?></td>
-            <td class="text-right"><?= number_format($r['betrag'],2,',','.') ?> &euro;</td>
-            <td><?php if ($r['dateiname']): ?><a href="datei.php?typ=rechnung&id=<?= $r['id'] ?>" target="_blank" class="btn btn-sm" style="background:var(--card-bg-high);color:var(--text)">📄</a><?php endif; ?></td>
-            <td><?php if (!istNurLesend()): ?><form method="post" style="display:inline" onsubmit="return confirm('L&ouml;schen?')"><?= csrfFeld() ?><input type="hidden" name="delete_id" value="<?= $r['id'] ?>"><input type="hidden" name="jahr" value="<?= $filterJahr ?>"><button type="submit" class="btn btn-sm btn-danger">✕</button></form><?php endif; ?></td>
-        </tr>
-        <?php endforeach; ?>
-        <?php if (!$rechnungen): ?><tr><td colspan="7" class="text-center" style="color:var(--muted)">Keine Rechnungen</td></tr><?php endif; ?>
-        </tbody>
-    </table></div>
+    <?php if (!$rechnungenGruppen): ?>
+    <p style="color:var(--muted)">Keine Rechnungen</p>
+    <?php endif; ?>
+    <?php foreach ($rechnungenGruppen as $schluessel => $gruppe): ?>
+    <details class="dok-gruppe"<?= $schluessel === $aktuellerMonatSchluesselRe ? ' open' : '' ?>>
+        <summary class="dok-gruppe-titel">
+            <?= htmlspecialchars($gruppe['label']) ?>
+            <span class="dok-gruppe-anzahl"><?= count($gruppe['eintraege']) ?></span>
+        </summary>
+        <div class="table-wrap"><table class="sortable">
+            <thead><tr><th>Datum</th><th>Kostenart</th><th>Zuordnung</th><th>Beschreibung</th><th class="text-right">Betrag</th><th>Datei</th><th></th></tr></thead>
+            <tbody>
+            <?php foreach ($gruppe['eintraege'] as $r): ?>
+            <tr>
+                <td><?= date('d.m.Y', strtotime($r['datum'])) ?></td>
+                <td><?= htmlspecialchars($r['kostenart']) ?></td>
+                <td>
+                    <?php if (!empty($gruppenJeRechnung[$r['id']])): ?>
+                    <span class="badge badge-warning" title="<?php
+                        $teile = [];
+                        foreach ($gruppenJeRechnung[$r['id']] as $g) {
+                            $anteilText = ((float)$g['anteil'] >= 1.0) ? 'voller Betrag' : round($g['anteil']*100,1) . '%';
+                            $teile[] = htmlspecialchars($g['wohnung']) . ' (' . $anteilText . ')';
+                        }
+                        echo implode(', ', $teile);
+                    ?>">Gruppe: <?= count($gruppenJeRechnung[$r['id']]) ?> Wohnungen</span>
+                    <?php elseif ($r['wohnung']): ?>
+                    <span class="badge badge-warning">nur <?= htmlspecialchars($r['wohnung']) ?></span>
+                    <?php else: ?>
+                    <span class="badge badge-info">umgelegt</span>
+                    <?php endif; ?>
+                </td>
+                <td><?= htmlspecialchars($r['beschreibung']) ?></td>
+                <td class="text-right"><?= number_format($r['betrag'],2,',','.') ?> &euro;</td>
+                <td><?php if ($r['dateiname']): ?><a href="datei.php?typ=rechnung&id=<?= $r['id'] ?>" target="_blank" class="btn btn-sm" style="background:var(--card-bg-high);color:var(--text)">📄</a><?php endif; ?></td>
+                <td><?php if (!istNurLesend()): ?><form method="post" style="display:inline" onsubmit="return confirm('L&ouml;schen?')"><?= csrfFeld() ?><input type="hidden" name="delete_id" value="<?= $r['id'] ?>"><input type="hidden" name="jahr" value="<?= $filterJahr ?>"><button type="submit" class="btn btn-sm btn-danger">✕</button></form><?php endif; ?></td>
+            </tr>
+            <?php endforeach; ?>
+            </tbody>
+        </table></div>
+    </details>
+    <?php endforeach; ?>
 </div>
 
 <?php include '../assets/footer.php'; ?>

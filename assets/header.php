@@ -83,6 +83,13 @@ $currentPage = basename($_SERVER['PHP_SELF']);
 // ------------------------------------------------------------
 $changelog = [
     [
+        'version' => 'v68',
+        'datum'   => 'September 2026',
+        'punkte'  => [
+            'Rechnungen: ebenfalls nach Monat aufklappbar gruppiert (wie zuvor bei Wirtschaftlichkeit) – der aktuelle Monat ist standardmäßig aufgeklappt',
+        ],
+    ],
+    [
         'version' => 'v67',
         'datum'   => 'September 2026',
         'punkte'  => [
