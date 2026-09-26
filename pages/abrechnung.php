@@ -80,7 +80,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['erstellen'])) {
         $wohnungen = $wStmt->fetchAll();
         $gesamtFlaeche   = array_sum(array_column($wohnungen, 'wohnflaeche'));
         $anzahlWohnungen = count($wohnungen);
-        $gesamtPersonen  = array_sum(array_column($wohnungen, 'personen'));
+        // Für PERSONEN: komplette Mieterwechsel-Historie ALLER Wohnungen einmalig
+        // laden, damit die Gesamt-Personenzahl je Abschnitt historisch korrekt
+        // ermittelt werden kann (siehe personenAnteilSegmentiert), nicht nur
+        // anhand des heutigen Live-Standes der anderen Wohnungen.
+        $wechselHistorienJeWohnung = ladeWechselHistorienJeWohnung($db, $wohnungen);
 
         // Kosten: alle Rechnungen, deren Datum im gewählten Zeitraum liegt
         // → getrennt nach: wird umgelegt / direkt einer Wohnung / Gruppe mehrerer Wohnungen
@@ -162,16 +166,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['erstellen'])) {
                 $zeitanteil   = $abschnitt['zeitanteil'];
 
                 foreach ($alleKosten as $k) {
-                    $verbrauchAnteilWohnung = $gesamtVerbrauch > 0
-                        ? ($verbrauchWohnung * $zeitanteil) / $gesamtVerbrauch
-                        : 0;
-
-                    $kostenanteil = berechneKostenanteil(
-                        $k['schluessel'], $k['betrag'], $zeitanteil,
-                        $w['wohnflaeche'], $gesamtFlaeche,
-                        $abschnitt['personen'], $gesamtPersonen,
-                        $verbrauchAnteilWohnung, $anzahlWohnungen
-                    );
+                    if ($k['schluessel'] === 'PERSONEN') {
+                        $anteil = personenAnteilSegmentiert(
+                            $wohnungen, $wechselHistorienJeWohnung, (int)$w['id'],
+                            $abschnitt['von'], $abschnitt['bis'], $tageGesamt
+                        );
+                        $kostenanteil = round($k['betrag'] * $anteil, 2);
+                    } else {
+                        $verbrauchAnteilWohnung = $gesamtVerbrauch > 0
+                            ? ($verbrauchWohnung * $zeitanteil) / $gesamtVerbrauch
+                            : 0;
+                        $kostenanteil = berechneKostenanteil(
+                            $k['schluessel'], $k['betrag'], $zeitanteil,
+                            $w['wohnflaeche'], $gesamtFlaeche,
+                            $verbrauchAnteilWohnung, $anzahlWohnungen
+                        );
+                    }
                     if ($kostenanteil != 0) {
                         $gesamtKosten += $kostenanteil;
                         $positionen[] = [

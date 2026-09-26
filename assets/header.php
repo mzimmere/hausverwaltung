@@ -83,6 +83,13 @@ $currentPage = basename($_SERVER['PHP_SELF']);
 // ------------------------------------------------------------
 $changelog = [
     [
+        'version' => 'v71',
+        'datum'   => 'September 2026',
+        'punkte'  => [
+            'Wichtige Korrektur: Umlageschlüssel PERSONEN berücksichtigt jetzt bei jeder Wohnung die historisch korrekte Gesamt-Personenzahl des ganzen Hauses zu jedem Zeitpunkt, statt immer den heutigen Stand aller anderen Wohnungen zu nutzen. Betraf Abrechnungen, bei denen irgendeine Wohnung im Haus zwischenzeitlich einen Mieterwechsel mit geänderter Personenzahl hatte – die Kostenanteile konnten sich dadurch nicht mehr korrekt zur Rechnungssumme aufsummieren. Falls ihr den Umlageschlüssel PERSONEN nutzt, betroffene Abrechnungen bitte neu berechnen',
+        ],
+    ],
+    [
         'version' => 'v70',
         'datum'   => 'September 2026',
         'punkte'  => [

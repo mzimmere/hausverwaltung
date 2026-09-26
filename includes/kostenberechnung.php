@@ -41,15 +41,19 @@ function tageZwischen(DateTime $von, DateTime $bis): int {
     return (int)$von->diff($bis)->days + 1;
 }
 
-/** Kostenanteil einer Wohnung für einen Abschnitt berechnen */
+/**
+ * Kostenanteil einer Wohnung für einen Abschnitt berechnen.
+ * PERSONEN wird NICHT hier behandelt - dafür braucht es die historische
+ * Personenzahl ALLER Wohnungen im Haus (siehe personenAnteilSegmentiert),
+ * nicht nur der einen, deshalb wird dieser Schlüssel von den Aufrufstellen
+ * (abrechnung.php, berechneLaufendeKosten) vorher gesondert behandelt.
+ */
 function berechneKostenanteil(
     string $schluessel,
     float $gesamtBetrag,
     float $zeitanteil,
     float $wohnflaeche,
     float $gesamtFlaeche,
-    int $personen,
-    int $gesamtPersonen,
     float $verbrauchAnteil,   // bereits 0..1
     int $anzahlWohnungen
 ): float {
@@ -60,9 +64,6 @@ function berechneKostenanteil(
         case 'GLEICHANTEIL':
             $anteil = (1 / max(1, $anzahlWohnungen)) * $zeitanteil;
             break;
-        case 'PERSONEN':
-            $anteil = ($gesamtPersonen > 0 ? $personen / $gesamtPersonen : 0) * $zeitanteil;
-            break;
         case 'VERBRAUCH':
             $anteil = $verbrauchAnteil; // bereits zeitlich/verbrauchsbezogen vorberechnet
             break;
@@ -70,6 +71,118 @@ function berechneKostenanteil(
             $anteil = 0;
     }
     return round($gesamtBetrag * $anteil, 2);
+}
+
+/**
+ * Personenzahl einer Wohnung an einem bestimmten Datum, anhand ihrer
+ * Mieterwechsel-Historie ermittelt - NICHT anhand des aktuellen Live-Werts
+ * in der Wohnungen-Tabelle, der immer nur den heutigen Stand zeigt.
+ * $wechselHistorie muss aufsteigend nach uebergabe_datum sortiert sein
+ * (siehe ladeWechselHistorienJeWohnung).
+ */
+function personenAmDatum(array $wechselHistorie, DateTime $datum, int $liveWertFallback): int {
+    if (empty($wechselHistorie)) {
+        return $liveWertFallback;
+    }
+    $ersterWechsel = new DateTime($wechselHistorie[0]['uebergabe_datum']);
+    if ($datum < $ersterWechsel) {
+        return (int)$wechselHistorie[0]['mieter_alt_personen'];
+    }
+    $personen = (int)$wechselHistorie[0]['mieter_alt_personen'];
+    foreach ($wechselHistorie as $wechsel) {
+        if ($datum >= new DateTime($wechsel['uebergabe_datum'])) {
+            $personen = (int)$wechsel['mieter_neu_personen'];
+        }
+    }
+    return $personen;
+}
+
+/**
+ * Lädt für alle übergebenen Wohnungen einmalig die komplette Mieterwechsel-
+ * Historie (aufsteigend sortiert) - damit personenAmDatum()/
+ * personenAnteilSegmentiert() nicht bei jedem Aufruf neu aus der
+ * Datenbank lesen müssen.
+ */
+function ladeWechselHistorienJeWohnung(PDO $db, array $wohnungen): array {
+    $historien = [];
+    $stmt = $db->prepare("SELECT * FROM mieterwechsel WHERE wohnung_id=? ORDER BY uebergabe_datum ASC");
+    foreach ($wohnungen as $w) {
+        $stmt->execute([(int)$w['id']]);
+        $historien[(int)$w['id']] = $stmt->fetchAll();
+    }
+    return $historien;
+}
+
+/**
+ * PERSONEN-Anteil einer Wohnung an einem Abschnitt [$segVon,$segBis] eines
+ * Gesamtzeitraums - korrekt über ALLE Mieterwechsel im ganzen Haus hinweg,
+ * nicht nur die der betrachteten Wohnung selbst. Der einfache Ansatz (feste
+ * Gesamt-Personenzahl aus dem heutigen Stand aller Wohnungen) wäre falsch,
+ * sobald eine ANDERE Wohnung im Haus zwischenzeitlich einen Mieterwechsel
+ * mit geänderter Personenzahl hatte und eine ältere Abrechnung neu
+ * berechnet wird.
+ *
+ * $gesamtTageNormierung ist die Gesamtlänge des KOMPLETTEN Abrechnungs-
+ * zeitraums (nicht nur dieses Abschnitts) - der Rückgabewert ist relativ
+ * dazu, damit sich die Anteile mehrerer Abschnitte einer Wohnung korrekt
+ * zum vollen Anteil aufsummieren.
+ */
+function personenAnteilSegmentiert(
+    array $wohnungen,
+    array $wechselHistorienJeWohnung,
+    int $wohnungId,
+    DateTime $segVon,
+    DateTime $segBis,
+    int $gesamtTageNormierung
+): float {
+    if ($segVon > $segBis || $gesamtTageNormierung <= 0) {
+        return 0.0;
+    }
+
+    // Umbruchpunkte innerhalb des Abschnitts sammeln: der Tag NACH jedem
+    // Mieterwechsel-Datum einer BELIEBIGEN Wohnung im Haus, an dem sich
+    // personenAmDatum() für irgendeine Wohnung ändern könnte.
+    $segBisPlus1 = (clone $segBis)->modify('+1 day');
+    $punkte = [clone $segVon, $segBisPlus1];
+    foreach ($wechselHistorienJeWohnung as $historie) {
+        foreach ($historie as $wechsel) {
+            $tagDanach = new DateTime($wechsel['uebergabe_datum']);
+            $tagDanach->modify('+1 day');
+            if ($tagDanach > $segVon && $tagDanach < $segBisPlus1) {
+                $punkte[] = $tagDanach;
+            }
+        }
+    }
+    usort($punkte, fn($a, $b) => $a <=> $b);
+    $eindeutig = [];
+    foreach ($punkte as $p) {
+        $eindeutig[$p->format('Y-m-d')] = $p;
+    }
+    $punkte = array_values($eindeutig);
+
+    $summeAnteil = 0.0;
+    for ($i = 0; $i < count($punkte) - 1; $i++) {
+        $subVon = $punkte[$i];
+        $subBis = (clone $punkte[$i + 1])->modify('-1 day');
+        if ($subVon > $subBis) continue;
+
+        $tageSub = tageZwischen($subVon, $subBis);
+
+        $gesamtPersonen = 0;
+        $personenWohnung = 0;
+        foreach ($wohnungen as $w) {
+            $wid = (int)$w['id'];
+            $p = personenAmDatum($wechselHistorienJeWohnung[$wid] ?? [], $subVon, (int)$w['personen']);
+            $gesamtPersonen += $p;
+            if ($wid === $wohnungId) $personenWohnung = $p;
+        }
+
+        if ($gesamtPersonen > 0) {
+            $summeAnteil += ($personenWohnung / $gesamtPersonen) * ($tageSub / $gesamtTageNormierung);
+        }
+    }
+
+    return $summeAnteil;
 }
 
 /** Wasserverbrauch einer Wohnung im Zeitraum: letzter Stand - erster Stand */
@@ -254,7 +367,11 @@ function berechneLaufendeKosten(PDO $db, int $objektId, string $von, string $bis
     $wohnungen = $wStmt->fetchAll();
     $gesamtFlaeche   = array_sum(array_column($wohnungen, 'wohnflaeche'));
     $anzahlWohnungen = count($wohnungen);
-    $gesamtPersonen  = array_sum(array_column($wohnungen, 'personen'));
+    // Für PERSONEN: komplette Mieterwechsel-Historie ALLER Wohnungen einmalig
+    // laden, damit die Gesamt-Personenzahl je Abschnitt historisch korrekt
+    // ermittelt werden kann (siehe personenAnteilSegmentiert), nicht nur
+    // anhand des heutigen Live-Standes.
+    $wechselHistorienJeWohnung = ladeWechselHistorienJeWohnung($db, $wohnungen);
 
     $komponenten = sammleKostenkomponenten($db, $objektId, $von, $bis);
     $alleKosten            = $komponenten['alleKosten'];
@@ -266,7 +383,7 @@ function berechneLaufendeKosten(PDO $db, int $objektId, string $von, string $bis
 
     foreach ($wohnungen as $w) {
         // Mieterwechsel-Abschnitte wie in der echten Abrechnung (wichtig für
-        // Umlageschlüssel PERSONEN, falls im Zeitraum ein Wechsel stattfand)
+        // die Zuordnung von Kosten/Zeitanteilen bei einem Wechsel im Zeitraum)
         $wechselStmt = $db->prepare("
             SELECT * FROM mieterwechsel
             WHERE wohnung_id = ? AND uebergabe_datum BETWEEN ? AND ?
@@ -277,8 +394,7 @@ function berechneLaufendeKosten(PDO $db, int $objektId, string $von, string $bis
 
         if (empty($wechselliste)) {
             $abschnitte = [[
-                'personen'   => $w['personen'],
-                'zeitanteil' => 1.0,
+                'von' => clone $vonDt, 'bis' => clone $bisDt, 'zeitanteil' => 1.0,
             ]];
         } else {
             $abschnitte = [];
@@ -286,13 +402,12 @@ function berechneLaufendeKosten(PDO $db, int $objektId, string $von, string $bis
             foreach ($wechselliste as $wechsel) {
                 $ueberg = new DateTime($wechsel['uebergabe_datum']);
                 $tage = tageZwischen($aktVon, $ueberg);
-                $abschnitte[] = ['personen' => $wechsel['mieter_alt_personen'], 'zeitanteil' => $tage / $tageGesamt];
+                $abschnitte[] = ['von' => clone $aktVon, 'bis' => clone $ueberg, 'zeitanteil' => $tage / $tageGesamt];
                 $aktVon = clone $ueberg;
                 $aktVon->modify('+1 day');
             }
             $tageRest = tageZwischen($aktVon, $bisDt);
-            $letzter = end($wechselliste);
-            $abschnitte[] = ['personen' => $letzter['mieter_neu_personen'], 'zeitanteil' => $tageRest / $tageGesamt];
+            $abschnitte[] = ['von' => clone $aktVon, 'bis' => clone $bisDt, 'zeitanteil' => $tageRest / $tageGesamt];
         }
 
         $verbrauchWohnung = $verbrauchJeWohnung[$w['id']] ?? 0;
@@ -301,13 +416,20 @@ function berechneLaufendeKosten(PDO $db, int $objektId, string $von, string $bis
         foreach ($abschnitte as $abschnitt) {
             $zeitanteil = $abschnitt['zeitanteil'];
             foreach ($alleKosten as $k) {
+                if ($k['schluessel'] === 'PERSONEN') {
+                    $anteil = personenAnteilSegmentiert(
+                        $wohnungen, $wechselHistorienJeWohnung, (int)$w['id'],
+                        $abschnitt['von'], $abschnitt['bis'], $tageGesamt
+                    );
+                    $gesamtKosten += round($k['betrag'] * $anteil, 2);
+                    continue;
+                }
                 $verbrauchAnteilWohnung = $gesamtVerbrauch > 0
                     ? ($verbrauchWohnung * $zeitanteil) / $gesamtVerbrauch
                     : 0;
                 $gesamtKosten += berechneKostenanteil(
                     $k['schluessel'], $k['betrag'], $zeitanteil,
                     $w['wohnflaeche'], $gesamtFlaeche,
-                    $abschnitt['personen'], $gesamtPersonen,
                     $verbrauchAnteilWohnung, $anzahlWohnungen
                 );
             }
