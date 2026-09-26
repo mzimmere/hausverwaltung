@@ -34,100 +34,110 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
     $betrag       = str_replace(',', '.', $_POST['betrag']);
     $jahr         = (int)$_POST['jahr'];
     $beschreibung = trim($_POST['beschreibung']);
-    $dateiname    = '';
+    $verteilModus = $_POST['verteil_modus'] ?? 'prozent'; // prozent | volle_summe
+    $gewaehlte    = $_POST['gruppe_wohnung'] ?? [];        // Array von wohnung_id
+    $anteile      = $_POST['gruppe_anteil'] ?? [];         // Array von Prozentwerten (Index passend zu gewaehlte)
 
-    if (!empty($_FILES['rechnung']['name'])) {
-        $ziel_dir = UPLOAD_RECHNUNGEN . $jahr . '/';
-        if (!is_dir($ziel_dir)) mkdir($ziel_dir, 0777, true);
-        $dateiname = date('Ymd_His') . '_' . bin2hex(random_bytes(4)) . '_' . preg_replace('/[^a-zA-Z0-9._-]/', '_', $_FILES['rechnung']['name']);
-        move_uploaded_file($_FILES['rechnung']['tmp_name'], $ziel_dir . $dateiname);
+    // Bei Gruppen-Zuordnung mit Prozent-Modus: Anteile VOR jedem Speichern
+    // prüfen (nichts anlegen, wenn sie nicht 100% ergeben) - vorher wurden
+    // Rechnung und Zuordnungen schon geschrieben und blieben bei falscher
+    // Summe fehlerhaft in der Datenbank stehen.
+    $summeAnteile = 0;
+    if ($zuordnung === 'gruppe' && $verteilModus === 'prozent') {
+        foreach ($gewaehlte as $idx => $wId) {
+            if ((int)$wId && isset($anteile[$idx])) {
+                $summeAnteile += (float)str_replace(',', '.', $anteile[$idx]);
+            }
+        }
     }
 
-    $stmt = $db->prepare("INSERT INTO rechnungen (objekt_id, kostenart_id, wohnung_id, datum, betrag, jahr, beschreibung, dateiname) VALUES (?,?,?,?,?,?,?,?)");
-    $stmt->execute([$objektId, $kostenartId, $wohnungId, $datum, $betrag, $jahr, $beschreibung, $dateiname]);
-    $rechnungId = $db->lastInsertId();
-    protokolliere('rechnungen', 'anlegen', (int)$rechnungId, 'Rechnung über ' . number_format($betrag, 2, ',', '.') . ' €');
+    if ($zuordnung === 'gruppe' && $verteilModus === 'prozent' && round($summeAnteile, 2) != 100.0) {
+        $errorMsg = "Die Anteile ergeben " . number_format($summeAnteile, 1, ',', '.') . " % statt 100 %. Bitte korrigieren.";
+    } else {
+        $dateiname = '';
+        if (!empty($_FILES['rechnung']['name'])) {
+            $ziel_dir = UPLOAD_RECHNUNGEN . $jahr . '/';
+            if (!is_dir($ziel_dir)) mkdir($ziel_dir, 0777, true);
+            $dateiname = date('Ymd_His') . '_' . bin2hex(random_bytes(4)) . '_' . preg_replace('/[^a-zA-Z0-9._-]/', '_', $_FILES['rechnung']['name']);
+            move_uploaded_file($_FILES['rechnung']['tmp_name'], $ziel_dir . $dateiname);
+        }
 
-    if ($zuordnung === 'gruppe') {
-        // Gruppen-Zuordnung: mehrere Wohnungen
-        $verteilModus = $_POST['verteil_modus'] ?? 'prozent'; // prozent | volle_summe
-        $gewaehlte    = $_POST['gruppe_wohnung'] ?? [];        // Array von wohnung_id
+        $stmt = $db->prepare("INSERT INTO rechnungen (objekt_id, kostenart_id, wohnung_id, datum, betrag, jahr, beschreibung, dateiname) VALUES (?,?,?,?,?,?,?,?)");
+        $stmt->execute([$objektId, $kostenartId, $wohnungId, $datum, $betrag, $jahr, $beschreibung, $dateiname]);
+        $rechnungId = $db->lastInsertId();
+        protokolliere('rechnungen', 'anlegen', (int)$rechnungId, 'Rechnung über ' . number_format($betrag, 2, ',', '.') . ' €');
 
-        $insRW = $db->prepare("INSERT INTO rechnung_wohnungen (rechnung_id, wohnung_id, anteil) VALUES (?,?,?)");
+        if ($zuordnung === 'gruppe') {
+            // Gruppen-Zuordnung: mehrere Wohnungen
+            $insRW = $db->prepare("INSERT INTO rechnung_wohnungen (rechnung_id, wohnung_id, anteil) VALUES (?,?,?)");
 
-        if ($verteilModus === 'volle_summe') {
-            // Jede ausgewählte Wohnung bekommt den VOLLEN Betrag (anteil = 1.0 je Wohnung)
-            $angehakt = array_filter($gewaehlte, fn($w) => (int)$w > 0);
-            foreach ($angehakt as $wId) {
-                $insRW->execute([$rechnungId, (int)$wId, 1.0]);
-            }
-            $successMsg = 'Rechnung gespeichert – jede der ' . count($angehakt) . ' ausgewählten Wohnungen erhält den vollen Betrag von '
-                . number_format($betrag, 2, ',', '.') . ' €.';
-        } else {
-            // Prozentual aufgeteilt (Summe muss 100 % ergeben)
-            $anteile = $_POST['gruppe_anteil'] ?? []; // Array von Prozentwerten (Index passend zu gewaehlte)
-            $summeAnteile = 0;
-            foreach ($gewaehlte as $idx => $wId) {
-                $wId = (int)$wId;
-                $proz = isset($anteile[$idx]) ? (float)str_replace(',', '.', $anteile[$idx]) : 0;
-                if ($wId && $proz > 0) {
-                    $insRW->execute([$rechnungId, $wId, $proz / 100]);
-                    $summeAnteile += $proz;
+            if ($verteilModus === 'volle_summe') {
+                // Jede ausgewählte Wohnung bekommt den VOLLEN Betrag (anteil = 1.0 je Wohnung)
+                $angehakt = array_filter($gewaehlte, fn($w) => (int)$w > 0);
+                foreach ($angehakt as $wId) {
+                    $insRW->execute([$rechnungId, (int)$wId, 1.0]);
                 }
-            }
-            if (round($summeAnteile, 2) != 100.0) {
-                $errorMsg = "Achtung: Die Anteile ergeben " . number_format($summeAnteile, 1, ',', '.') . " % statt 100 %. Bitte die Rechnung korrigieren oder löschen.";
+                $successMsg = 'Rechnung gespeichert – jede der ' . count($angehakt) . ' ausgewählten Wohnungen erhält den vollen Betrag von '
+                    . number_format($betrag, 2, ',', '.') . ' €.';
             } else {
+                // Prozentual aufgeteilt (Summe wurde oben bereits auf 100% geprüft)
+                foreach ($gewaehlte as $idx => $wId) {
+                    $wId = (int)$wId;
+                    $proz = isset($anteile[$idx]) ? (float)str_replace(',', '.', $anteile[$idx]) : 0;
+                    if ($wId && $proz > 0) {
+                        $insRW->execute([$rechnungId, $wId, $proz / 100]);
+                    }
+                }
                 $successMsg = 'Rechnung gespeichert – aufgeteilt auf ' . count($gewaehlte) . ' ausgewählte Wohnungen.';
             }
-        }
-    } else {
-        $successMsg = $wohnungId
-            ? 'Rechnung gespeichert – wird direkt dieser Wohnung zugeordnet (keine Umlage).'
-            : 'Rechnung gespeichert.';
-    }
-
-    // ── Zusätzliche Positionen (optional): z.B. ein Teil der Rechnung ist
-    // nicht umlegbar. Läuft unabhängig von der Zuordnung oben, betrifft
-    // nur zusätzliche Beträge, nicht die soeben gespeicherte Hauptrechnung.
-    $zusatzPositionen = [];
-    foreach (($_POST['pos'] ?? []) as $p) {
-        $typ = ($p['typ'] ?? '') === 'nicht_umlegbar' ? 'nicht_umlegbar' : 'umlegbar';
-        $posBetrag = (float)str_replace(',', '.', $p['betrag'] ?? '0');
-        if ($posBetrag <= 0) continue;
-        if ($typ === 'umlegbar') {
-            $posKostenartId = (int)($p['kostenart_id'] ?? 0);
-            if (!$posKostenartId) continue;
-            $zusatzPositionen[] = ['typ' => 'umlegbar', 'betrag' => $posBetrag, 'kostenart_id' => $posKostenartId];
         } else {
-            $posKategorieId = (int)($p['kategorie_id'] ?? 0);
-            if (!$posKategorieId) continue;
-            $zusatzPositionen[] = ['typ' => 'nicht_umlegbar', 'betrag' => $posBetrag, 'kategorie_id' => $posKategorieId];
+            $successMsg = $wohnungId
+                ? 'Rechnung gespeichert – wird direkt dieser Wohnung zugeordnet (keine Umlage).'
+                : 'Rechnung gespeichert.';
         }
-    }
-    if ($zusatzPositionen) {
-        foreach ($zusatzPositionen as $p) {
-            if ($p['typ'] === 'umlegbar') {
-                // Teilt sich denselben Beleg wie die Hauptrechnung (falls vorhanden) – unproblematisch.
-                $stmt = $db->prepare("INSERT INTO rechnungen (objekt_id, kostenart_id, wohnung_id, datum, betrag, jahr, beschreibung, dateiname) VALUES (?,?,NULL,?,?,?,?,?)");
-                $stmt->execute([$objektId, $p['kostenart_id'], $datum, $p['betrag'], $jahr, $beschreibung . ' (zusätzliche Position)', $dateiname]);
-                $zusatzId = (int)$db->lastInsertId();
-                protokolliere('rechnungen', 'anlegen', $zusatzId, 'Zusätzliche Position über ' . number_format($p['betrag'], 2, ',', '.') . ' € (umlegbar)');
+
+        // ── Zusätzliche Positionen (optional): z.B. ein Teil der Rechnung ist
+        // nicht umlegbar. Läuft unabhängig von der Zuordnung oben, betrifft
+        // nur zusätzliche Beträge, nicht die soeben gespeicherte Hauptrechnung.
+        $zusatzPositionen = [];
+        foreach (($_POST['pos'] ?? []) as $p) {
+            $typ = ($p['typ'] ?? '') === 'nicht_umlegbar' ? 'nicht_umlegbar' : 'umlegbar';
+            $posBetrag = (float)str_replace(',', '.', $p['betrag'] ?? '0');
+            if ($posBetrag <= 0) continue;
+            if ($typ === 'umlegbar') {
+                $posKostenartId = (int)($p['kostenart_id'] ?? 0);
+                if (!$posKostenartId) continue;
+                $zusatzPositionen[] = ['typ' => 'umlegbar', 'betrag' => $posBetrag, 'kostenart_id' => $posKostenartId];
             } else {
-                $posDateiname = '';
-                if ($dateiname !== '') {
-                    $zielDirEk = UPLOAD_DIR . 'eigentuemerkosten/' . $jahr . '/';
-                    if (!is_dir($zielDirEk)) mkdir($zielDirEk, 0777, true);
-                    $posDateiname = date('Ymd_His') . '_' . bin2hex(random_bytes(4)) . '_' . $dateiname;
-                    copy($ziel_dir . $dateiname, $zielDirEk . $posDateiname);
-                }
-                $stmt = $db->prepare("INSERT INTO eigentuemerkosten (objekt_id, kategorie_id, datum, betrag, jahr, beschreibung, dateiname) VALUES (?,?,?,?,?,?,?)");
-                $stmt->execute([$objektId, $p['kategorie_id'], $datum, $p['betrag'], $jahr, $beschreibung . ' (zusätzliche Position)', $posDateiname]);
-                $zusatzId = (int)$db->lastInsertId();
-                protokolliere('eigentuemerkosten', 'anlegen', $zusatzId, 'Zusätzliche Position über ' . number_format($p['betrag'], 2, ',', '.') . ' € (nicht umlegbar)');
+                $posKategorieId = (int)($p['kategorie_id'] ?? 0);
+                if (!$posKategorieId) continue;
+                $zusatzPositionen[] = ['typ' => 'nicht_umlegbar', 'betrag' => $posBetrag, 'kategorie_id' => $posKategorieId];
             }
         }
-        $successMsg .= ' Zusätzlich ' . count($zusatzPositionen) . ' weitere Position(en) angelegt.';
+        if ($zusatzPositionen) {
+            foreach ($zusatzPositionen as $p) {
+                if ($p['typ'] === 'umlegbar') {
+                    // Teilt sich denselben Beleg wie die Hauptrechnung (falls vorhanden) – unproblematisch.
+                    $stmt = $db->prepare("INSERT INTO rechnungen (objekt_id, kostenart_id, wohnung_id, datum, betrag, jahr, beschreibung, dateiname) VALUES (?,?,NULL,?,?,?,?,?)");
+                    $stmt->execute([$objektId, $p['kostenart_id'], $datum, $p['betrag'], $jahr, $beschreibung . ' (zusätzliche Position)', $dateiname]);
+                    $zusatzId = (int)$db->lastInsertId();
+                    protokolliere('rechnungen', 'anlegen', $zusatzId, 'Zusätzliche Position über ' . number_format($p['betrag'], 2, ',', '.') . ' € (umlegbar)');
+                } else {
+                    $posDateiname = '';
+                    if ($dateiname !== '') {
+                        $zielDirEk = UPLOAD_DIR . 'eigentuemerkosten/' . $jahr . '/';
+                        if (!is_dir($zielDirEk)) mkdir($zielDirEk, 0777, true);
+                        $posDateiname = date('Ymd_His') . '_' . bin2hex(random_bytes(4)) . '_' . $dateiname;
+                        copy($ziel_dir . $dateiname, $zielDirEk . $posDateiname);
+                    }
+                    $stmt = $db->prepare("INSERT INTO eigentuemerkosten (objekt_id, kategorie_id, datum, betrag, jahr, beschreibung, dateiname) VALUES (?,?,?,?,?,?,?)");
+                    $stmt->execute([$objektId, $p['kategorie_id'], $datum, $p['betrag'], $jahr, $beschreibung . ' (zusätzliche Position)', $posDateiname]);
+                    $zusatzId = (int)$db->lastInsertId();
+                    protokolliere('eigentuemerkosten', 'anlegen', $zusatzId, 'Zusätzliche Position über ' . number_format($p['betrag'], 2, ',', '.') . ' € (nicht umlegbar)');
+                }
+            }
+            $successMsg .= ' Zusätzlich ' . count($zusatzPositionen) . ' weitere Position(en) angelegt.';
+        }
     }
 }
 

@@ -74,10 +74,13 @@ function berechneKostenanteil(
 
 /** Wasserverbrauch einer Wohnung im Zeitraum: letzter Stand - erster Stand */
 function verbrauchImZeitraum(PDO $db, int $wohnungId, string $von, string $bis): float {
+    // Letzter Stand VOR/AM Zeitraumbeginn (nicht der älteste je erfasste!) -
+    // sonst würde bei mehreren historischen Ständen der Verbrauch bereits
+    // abgerechneter Vorjahre nochmal mitgezählt.
     $stmt = $db->prepare("
         SELECT stand FROM wasserablesungen
         WHERE wohnung_id = ? AND datum <= ?
-        ORDER BY datum ASC LIMIT 1
+        ORDER BY datum DESC LIMIT 1
     ");
     $stmt->execute([$wohnungId, $von]);
     $anfangVorher = $stmt->fetchColumn();
@@ -102,6 +105,31 @@ function verbrauchImZeitraum(PDO $db, int $wohnungId, string $von, string $bis):
 
     if ($anfang === false || $ende === false) return 0.0;
     return max(0, (float)$ende - (float)$anfang);
+}
+
+/**
+ * Vorauszahlung für einen Datumsbereich - korrekt auch über Kalenderjahres-
+ * grenzen hinweg. Die Tabelle "vorauszahlungen" speichert den monatlichen
+ * Abschlag je Kalenderjahr; bei einem Wirtschaftsjahr, das nicht am 1.1.
+ * beginnt, kann ein Abrechnungszeitraum zwei Kalenderjahre überspannen. Ein
+ * einzelner Lookup nach nur einem Jahr würde dann fälschlich den kompletten
+ * Zeitraum mit dem Abschlag nur eines der beiden Jahre bewerten, falls sich
+ * der Abschlag zwischen den Jahren geändert hat.
+ */
+function vorauszahlungFuerZeitraum(PDO $db, int $wohnungId, DateTime $von, DateTime $bis): float {
+    $stmt = $db->prepare("SELECT COALESCE(monatlicher_abschlag,0) FROM vorauszahlungen WHERE wohnung_id=? AND jahr=?");
+    $summe = 0.0;
+    $aktVon = clone $von;
+    while ($aktVon <= $bis) {
+        $jahrEnde = new DateTime($aktVon->format('Y') . '-12-31');
+        $segmentBis = $jahrEnde < $bis ? $jahrEnde : clone $bis;
+        $stmt->execute([$wohnungId, (int)$aktVon->format('Y')]);
+        $abschlag = (float)$stmt->fetchColumn();
+        $summe += $abschlag * (tageZwischen($aktVon, $segmentBis) / 30.44);
+        $aktVon = clone $segmentBis;
+        $aktVon->modify('+1 day');
+    }
+    return round($summe, 2);
 }
 
 /**
@@ -220,7 +248,6 @@ function berechneLaufendeKosten(PDO $db, int $objektId, string $von, string $bis
     $vonDt = new DateTime($von);
     $bisDt = new DateTime($bis);
     $tageGesamt = tageZwischen($vonDt, $bisDt);
-    $jahr = (int)$bisDt->format('Y');
 
     $wStmt = $db->prepare("SELECT * FROM wohnungen WHERE aktiv=1 AND objekt_id=?");
     $wStmt->execute([$objektId]);
@@ -307,10 +334,8 @@ function berechneLaufendeKosten(PDO $db, int $objektId, string $von, string $bis
         }
 
         // Bislang geleistete Vorauszahlung, zeitanteilig über den ganzen Zeitraum hochgerechnet
-        $v = $db->prepare("SELECT COALESCE(monatlicher_abschlag,0) FROM vorauszahlungen WHERE wohnung_id=? AND jahr=?");
-        $v->execute([$w['id'], $jahr]);
-        $abschlag = (float)$v->fetchColumn();
-        $vorauszahlung = round($abschlag * ($tageGesamt / 30.44), 2);
+        // (korrekt auch über Kalenderjahresgrenzen hinweg, siehe vorauszahlungFuerZeitraum)
+        $vorauszahlung = vorauszahlungFuerZeitraum($db, (int)$w['id'], $vonDt, $bisDt);
 
         $ergebnis[$w['id']] = [
             'kosten'         => round($gesamtKosten, 2),

@@ -83,6 +83,15 @@ $currentPage = basename($_SERVER['PHP_SELF']);
 // ------------------------------------------------------------
 $changelog = [
     [
+        'version' => 'v69',
+        'datum'   => 'September 2026',
+        'punkte'  => [
+            'Wichtige Korrektur: Wasserverbrauch (Umlageschlüssel VERBRAUCH) wurde bei mehreren gespeicherten Zählerständen falsch berechnet – es wurde immer der älteste je erfasste Stand als Anfangswert genutzt statt des letzten Standes vor Beginn des Abrechnungszeitraums. Dadurch wurde teils bereits abgerechneter Verbrauch aus Vorjahren nochmal mitgezählt. Betroffene Abrechnungen bitte neu berechnen',
+            'Korrektur: Vorauszahlung wurde bei einem Wirtschaftsjahr, das nicht am 1.1. beginnt, für den kompletten Zeitraum nur mit dem Abschlag eines der beiden betroffenen Kalenderjahre berechnet, falls sich der Abschlag zwischen den Jahren geändert hatte',
+            'Korrektur: bei einer Rechnung mit prozentualer Aufteilung auf mehrere Wohnungen wurde bei falscher Prozentsumme (nicht 100%) trotzdem bereits gespeichert – jetzt wird vorher geprüft, es wird nichts angelegt, bis die Summe stimmt',
+        ],
+    ],
+    [
         'version' => 'v68',
         'datum'   => 'September 2026',
         'punkte'  => [

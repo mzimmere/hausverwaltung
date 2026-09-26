@@ -215,13 +215,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['erstellen'])) {
                     }
                 }
 
-                // Vorauszahlungen: monatlicher Abschlag × Monate im Zeitraum (taggenau approximiert)
-                $v = $db->prepare("SELECT COALESCE(monatlicher_abschlag,0) FROM vorauszahlungen WHERE wohnung_id=? AND jahr=?");
-                $v->execute([$w['id'], $anzeigeJahr]);
-                $abschlag = (float)$v->fetchColumn();
-                // Monatsanteil = Tage des Abschnitts / 30,44 (Durchschnittsmonat)
-                $tageAbschnitt = tageZwischen($abschnitt['von'], $abschnitt['bis']);
-                $vorauszahlung = round($abschlag * ($tageAbschnitt / 30.44), 2);
+                // Vorauszahlungen: monatlicher Abschlag × Monate im Zeitraum (taggenau approximiert,
+                // korrekt auch über Kalenderjahresgrenzen hinweg, siehe vorauszahlungFuerZeitraum)
+                $vorauszahlung = vorauszahlungFuerZeitraum($db, (int)$w['id'], $abschnitt['von'], $abschnitt['bis']);
 
                 // ── Gutschriften: zeitanteilig nach Überlappung mit dem Abschnitt ──
                 $gutschriftGesamt = 0;
