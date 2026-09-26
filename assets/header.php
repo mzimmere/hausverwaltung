@@ -83,6 +83,13 @@ $currentPage = basename($_SERVER['PHP_SELF']);
 // ------------------------------------------------------------
 $changelog = [
     [
+        'version' => 'v70',
+        'datum'   => 'September 2026',
+        'punkte'  => [
+            'Aufräumen: alte, nirgends mehr eingebundene Alt-Dateien includes/header.php und includes/footer.php entfernt (führten zu Verwechslungen mit den echten, aktiv gepflegten Dateien assets/header.php und assets/footer.php)',
+        ],
+    ],
+    [
         'version' => 'v69',
         'datum'   => 'September 2026',
         'punkte'  => [
