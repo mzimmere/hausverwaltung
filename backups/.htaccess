@@ -1,0 +1,23 @@
+# Verhindert, dass Dateien in diesem Ordner als PHP ausgeführt werden
+# (Backups/Restore-Uploads sind .sql/.zip, sollen aber nie ausführbar sein)
+# und blockiert direkten Browser-Zugriff auf die Datenbank-Backups.
+<IfModule mod_authz_core.c>
+    <FilesMatch "\.(php|php3|php4|php5|php7|phtml|pht|phar)$">
+        Require all denied
+    </FilesMatch>
+    <FilesMatch "\.(sql|zip)$">
+        Require all denied
+    </FilesMatch>
+</IfModule>
+<IfModule !mod_authz_core.c>
+    <FilesMatch "\.(php|php3|php4|php5|php7|phtml|pht|phar|sql|zip)$">
+        Order allow,deny
+        Deny from all
+    </FilesMatch>
+</IfModule>
+<IfModule mod_php7.c>
+    php_admin_flag engine off
+</IfModule>
+<IfModule mod_php.c>
+    php_admin_flag engine off
+</IfModule>

@@ -57,27 +57,18 @@ chmod 777 /volume1/web/hausverwaltung/backups
 
 Alternativ im File Station: Rechtsklick → Eigenschaften → Berechtigungen → `http` Vollzugriff.
 
-### 4. Installations-Assistent aufrufen
+### 4. Tabellen anlegen
 
-Öffnen Sie im Browser:
+Aus Sicherheitsgründen gibt es keinen webbasierten Installations-Assistenten mehr
+(ein solches Skript ohne Zugriffsschutz wäre ein offenes Einfallstor). Stattdessen
+in **phpMyAdmin** (Datenbank `hausverwaltung`, Reiter „Importieren") die Datei
+`sql/install_complete.sql` einmalig importieren. Das legt alle Tabellen und
+Beispiel-Kostenarten an.
 
-```
-http://IHR-NAS-IP/hausverwaltung/install.php
-```
+Passen Sie danach `config/config.php` manuell an (DB_HOST/DB_NAME/DB_USER/DB_PASS
+entsprechend der in Schritt 1 angelegten Datenbank).
 
-z.B. `http://192.168.1.100/hausverwaltung/install.php`
-
-Der Assistent führt Sie durch:
-- ✅ Systemprüfung
-- ✅ Datenbankverbindung testen & konfigurieren
-- ✅ Alle Tabellen anlegen
-- ✅ Beispieldaten einrichten (3 Wohnungen, Kostenarten)
-
-### 5. install.php löschen
-
-**Wichtig:** Nach der Installation die Datei `install.php` löschen!
-
-### 6. Anwendung öffnen
+### 5. Anwendung öffnen
 
 ```
 http://IHR-NAS-IP/hausverwaltung/
@@ -132,8 +123,14 @@ Danach erscheint auf der Abrechnung ein **"PDF Download"** Button.
 
 ## Sicherheit
 
-- Die Anwendung ist **nur im Heimnetz** gedacht (kein Internet-Zugang)
-- Kein Passwortschutz eingebaut – bei Bedarf nginx/Apache Basic Auth nutzen
+- Die Anwendung hat ein eingebautes Login-/Rollensystem (Admin/Leser/Hausmeister/Mieter) –
+  ein Konto wird beim Import von `sql/install_complete.sql` mit Benutzername `admin`
+  angelegt (Passwort siehe Kommentar in der SQL-Datei; bitte sofort nach dem ersten
+  Login ändern).
+- Falls Sie sich aussperren: in phpMyAdmin `UPDATE benutzer SET passwort = '<bcrypt-Hash>'
+  WHERE benutzername = 'admin';` ausführen (Hash z.B. mit `password_hash()` in einer
+  lokalen PHP-Konsole erzeugen – niemals ein Passwort-Reset-Skript ohne Login-Schutz
+  auf den Server legen, das ist ein kritisches Sicherheitsrisiko).
 - Regelmäßig Backup erstellen (Seite "Backup")
 
 ---

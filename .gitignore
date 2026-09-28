@@ -9,6 +9,9 @@ config/config.php
 # Skripten (Dockerfile, synology-spk/build_spk.sh, postinst) selbst
 # angelegt, muss also nicht extra über .gitkeep-Dateien versioniert werden.
 uploads/
+# Ausnahme: Sicherheits-Schutzdatei (verhindert PHP-Ausführung in uploads/)
+# soll trotzdem mitversioniert werden.
+!uploads/.htaccess
 
 # Echte Datenbank-Backups (enthalten Klarnamen, Beträge, Adressen)
 backups/*.sql

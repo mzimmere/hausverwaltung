@@ -83,6 +83,16 @@ $currentPage = basename($_SERVER['PHP_SELF']);
 // ------------------------------------------------------------
 $changelog = [
     [
+        'version' => 'v72',
+        'datum'   => 'September 2026',
+        'punkte'  => [
+            'SICHERHEIT (kritisch): backups/install.php und backups/passwort_reset.php entfernt – diese Dateien konnten ohne echten Login-Schutz einen neuen Admin-Zugang anlegen bzw. die Datenbank-Zugangsdaten umschreiben. Bitte manuell prüfen, ob diese Dateien noch auf dem Server liegen, und ggf. löschen',
+            'SICHERHEIT: fehlende Dateityp-Prüfung beim Hochladen behoben (Rechnungen, Dokumente, Eigentümerkosten-Belege, Übergabeprotokolle, Backup-Wiederherstellung) – bisher konnte jede Dateiendung hochgeladen werden',
+            'SICHERHEIT: PHP-Ausführung im uploads/- und backups/-Ordner serverseitig deaktiviert (zusätzliche Absicherung, unabhängig von der Dateityp-Prüfung)',
+            'SICHERHEIT: .dockerignore ergänzt, damit bei einer Docker-Installation nicht versehentlich das komplette Projekt inkl. sensibler Dateien ins Image kopiert wird',
+        ],
+    ],
+    [
         'version' => 'v71',
         'datum'   => 'September 2026',
         'punkte'  => [

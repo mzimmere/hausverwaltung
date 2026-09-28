@@ -45,13 +45,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
         $zWarm  = $_POST['zaehler_warmwasser'] !== '' ? str_replace(',','.',$_POST['zaehler_warmwasser']) : null;
         $zStrom = $_POST['zaehler_strom']      !== '' ? str_replace(',','.',$_POST['zaehler_strom'])      : null;
 
+        $erlaubteExtProtokoll = ['pdf', 'jpg', 'jpeg', 'png', 'gif', 'webp'];
+        $extProtokoll = !empty($_FILES['protokoll']['name']) ? strtolower(pathinfo($_FILES['protokoll']['name'], PATHINFO_EXTENSION)) : null;
+
+        if ($extProtokoll !== null && !in_array($extProtokoll, $erlaubteExtProtokoll, true)) {
+            $errorMsg = 'Dieser Dateityp wird nicht unterstützt (nur PDF oder Bilder).';
+        } else {
         // Übergabeprotokoll-Upload
         $protokollDateiname = null;
         if (!empty($_FILES['protokoll']['name'])) {
             $jahr = (int)date('Y', strtotime($datum));
             $zielDir = UPLOAD_DIR . 'uebergabeprotokolle/' . $jahr . '/';
             if (!is_dir($zielDir)) mkdir($zielDir, 0777, true);
-            $protokollDateiname = $jahr . '/' . date('Ymd_His') . '_' . preg_replace('/[^a-zA-Z0-9._-]/', '_', $_FILES['protokoll']['name']);
+            $protokollDateiname = $jahr . '/' . date('Ymd_His') . '_' . bin2hex(random_bytes(8)) . '.' . $extProtokoll;
             move_uploaded_file($_FILES['protokoll']['tmp_name'], UPLOAD_DIR . 'uebergabeprotokolle/' . $protokollDateiname);
         }
 
@@ -82,6 +88,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
 
         protokolliere('mieterwechsel', 'anlegen', (int)$db->lastInsertId(), "Mieterwechsel angelegt, neuer Mieter: $neuName");
         $successMsg = "Mieterwechsel gespeichert. Neuer Mieter: $neuName. Die Abrechnung wird automatisch taggenau aufgeteilt.";
+        }
     }
 
     if ($_POST['action'] === 'delete') {

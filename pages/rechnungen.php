@@ -51,14 +51,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
         }
     }
 
+    // Erlaubte Dateitypen für Rechnungs-Belege (Endung entscheidet NICHT
+    // allein - die Endung wird unten fest aus dieser Liste neu gesetzt,
+    // der ursprüngliche Dateiname fließt nicht mehr in den Pfad ein).
+    $erlaubteExtRechnung = ['pdf', 'jpg', 'jpeg', 'png', 'gif', 'webp'];
+    $hochgeladeneExt = null;
+    if (!empty($_FILES['rechnung']['name'])) {
+        $hochgeladeneExt = strtolower(pathinfo($_FILES['rechnung']['name'], PATHINFO_EXTENSION));
+    }
+
     if ($zuordnung === 'gruppe' && $verteilModus === 'prozent' && round($summeAnteile, 2) != 100.0) {
         $errorMsg = "Die Anteile ergeben " . number_format($summeAnteile, 1, ',', '.') . " % statt 100 %. Bitte korrigieren.";
+    } elseif ($hochgeladeneExt !== null && !in_array($hochgeladeneExt, $erlaubteExtRechnung, true)) {
+        $errorMsg = 'Dieser Dateityp wird nicht unterstützt (nur PDF oder Bilder).';
     } else {
         $dateiname = '';
         if (!empty($_FILES['rechnung']['name'])) {
             $ziel_dir = UPLOAD_RECHNUNGEN . $jahr . '/';
             if (!is_dir($ziel_dir)) mkdir($ziel_dir, 0777, true);
-            $dateiname = date('Ymd_His') . '_' . bin2hex(random_bytes(4)) . '_' . preg_replace('/[^a-zA-Z0-9._-]/', '_', $_FILES['rechnung']['name']);
+            // Dateiname komplett neu erzeugt (Zufall + geprüfte Endung) - der
+            // ursprüngliche Dateiname fließt nirgends mehr in den Pfad ein.
+            $dateiname = date('Ymd_His') . '_' . bin2hex(random_bytes(8)) . '.' . $hochgeladeneExt;
             move_uploaded_file($_FILES['rechnung']['tmp_name'], $ziel_dir . $dateiname);
         }
 

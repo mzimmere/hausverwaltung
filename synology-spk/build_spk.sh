@@ -21,6 +21,14 @@ mkdir -p "$APP"/uploads/abrechnungen "$APP"/uploads/rechnungen/einreichungen \
          "$APP"/uploads/dokumente "$APP"/uploads/dokumentensafe "$APP"/uploads/fotoalbum \
          "$APP"/uploads/eigentuemerkosten "$APP"/uploads/uebergabeprotokolle "$APP"/backups
 
+# Sicherheits-Schutzdateien: verhindern PHP-Ausführung in Upload-/Backup-
+# Ordnern, auch falls eine Upload-Pruefung irgendwo lueckenhaft sein sollte.
+# uploads/ und backups/ werden oben nur leer angelegt (echte Nutzdaten
+# gehoeren nicht ins Paket), die .htaccess-Dateien muessen deshalb hier
+# separat aus dem Projekt kopiert werden.
+cp "$PROJECT_ROOT"uploads/.htaccess "$APP"/uploads/.htaccess
+cp "$PROJECT_ROOT"backups/.htaccess "$APP"/backups/.htaccess
+
 rm -f "$APP"/config/init.sql
 
 # Echtes Hausfoto nicht in ein potenziell weiterverteiltes Paket packen

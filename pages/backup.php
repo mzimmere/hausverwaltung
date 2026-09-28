@@ -215,14 +215,19 @@ function spieleBackupEin(PDO $db, string $quellDatei): array
 // ── Externe Backup-Datei hochladen (z.B. von einem anderen Gerät) ──
 if (isset($_POST['upload_backup']) && !empty($_FILES['backup_datei']['name'])) {
     csrfPruefen();
-    if (!is_dir(BACKUP_DIR)) mkdir(BACKUP_DIR, 0777, true);
-    $zielName = date('Y-m-d_His') . '_hochgeladen_' . preg_replace('/[^a-zA-Z0-9._-]/', '_', $_FILES['backup_datei']['name']);
-    $zielPfad = BACKUP_DIR . $zielName;
-    if (move_uploaded_file($_FILES['backup_datei']['tmp_name'], $zielPfad)) {
-        protokolliere('backup', 'anlegen', null, "Backup-Datei \"$zielName\" hochgeladen");
-        $successMsg = 'Datei "' . $zielName . '" hochgeladen. Sie können sie jetzt unten wiederherstellen.';
+    $extBackup = strtolower(pathinfo($_FILES['backup_datei']['name'], PATHINFO_EXTENSION));
+    if (!in_array($extBackup, ['sql', 'zip'], true)) {
+        $errorMsg = 'Nur .sql- oder .zip-Dateien werden unterstützt.';
     } else {
-        $errorMsg = 'Hochladen fehlgeschlagen.';
+        if (!is_dir(BACKUP_DIR)) mkdir(BACKUP_DIR, 0777, true);
+        $zielName = date('Y-m-d_His') . '_hochgeladen_' . bin2hex(random_bytes(4)) . '.' . $extBackup;
+        $zielPfad = BACKUP_DIR . $zielName;
+        if (move_uploaded_file($_FILES['backup_datei']['tmp_name'], $zielPfad)) {
+            protokolliere('backup', 'anlegen', null, "Backup-Datei \"$zielName\" hochgeladen");
+            $successMsg = 'Datei "' . $zielName . '" hochgeladen. Sie können sie jetzt unten wiederherstellen.';
+        } else {
+            $errorMsg = 'Hochladen fehlgeschlagen.';
+        }
     }
 }
 

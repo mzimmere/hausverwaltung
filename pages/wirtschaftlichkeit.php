@@ -47,18 +47,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
     $jahr    = (int)date('Y', strtotime($datum));
     $beschr  = trim($_POST['beschreibung']);
     $dateiname = '';
+    $erlaubteExtBeleg = ['pdf', 'jpg', 'jpeg', 'png', 'gif', 'webp'];
+    $extBeleg = !empty($_FILES['beleg']['name']) ? strtolower(pathinfo($_FILES['beleg']['name'], PATHINFO_EXTENSION)) : null;
 
-    if (!empty($_FILES['beleg']['name'])) {
-        $zielDir = UPLOAD_DIR . 'eigentuemerkosten/' . $jahr . '/';
-        if (!is_dir($zielDir)) mkdir($zielDir, 0777, true);
-        $dateiname = date('Ymd_His') . '_' . preg_replace('/[^a-zA-Z0-9._-]/', '_', $_FILES['beleg']['name']);
-        move_uploaded_file($_FILES['beleg']['tmp_name'], $zielDir . $dateiname);
+    if ($extBeleg !== null && !in_array($extBeleg, $erlaubteExtBeleg, true)) {
+        $errorMsg = 'Dieser Dateityp wird nicht unterstützt (nur PDF oder Bilder).';
+    } else {
+        if (!empty($_FILES['beleg']['name'])) {
+            $zielDir = UPLOAD_DIR . 'eigentuemerkosten/' . $jahr . '/';
+            if (!is_dir($zielDir)) mkdir($zielDir, 0777, true);
+            $dateiname = date('Ymd_His') . '_' . bin2hex(random_bytes(8)) . '.' . $extBeleg;
+            move_uploaded_file($_FILES['beleg']['tmp_name'], $zielDir . $dateiname);
+        }
+
+        $stmt = $db->prepare("INSERT INTO eigentuemerkosten (objekt_id, kategorie_id, datum, betrag, jahr, beschreibung, dateiname) VALUES (?,?,?,?,?,?,?)");
+        $stmt->execute([$objektId, $katId, $datum, $betrag, $jahr, $beschr, $dateiname]);
+        protokolliere('eigentuemerkosten', 'anlegen', (int)$db->lastInsertId(), 'Kosten über ' . number_format($betrag, 2, ',', '.') . ' €');
+        $successMsg = 'Kosten gespeichert.';
     }
-
-    $stmt = $db->prepare("INSERT INTO eigentuemerkosten (objekt_id, kategorie_id, datum, betrag, jahr, beschreibung, dateiname) VALUES (?,?,?,?,?,?,?)");
-    $stmt->execute([$objektId, $katId, $datum, $betrag, $jahr, $beschr, $dateiname]);
-    protokolliere('eigentuemerkosten', 'anlegen', (int)$db->lastInsertId(), 'Kosten über ' . number_format($betrag, 2, ',', '.') . ' €');
-    $successMsg = 'Kosten gespeichert.';
 }
 
 // ── Löschen ───────────────────────────────────────────────────

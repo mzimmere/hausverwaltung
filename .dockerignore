@@ -1,0 +1,25 @@
+# Verhindert, dass sensible/unnötige Dateien ins Docker-Image gebacken
+# werden - der Dockerfile macht "COPY . .", ohne diese Datei landet ALLES
+# im Bild, inkl. echter Zugangsdaten und Datenbank-Backups mit Klarnamen.
+.git/
+.gitignore
+.dockerignore
+
+# Echte Zugangsdaten
+config/config.php
+.env
+.env.*
+
+# Echte Nutzdaten (Rechnungen, Dokumente, Mieterdaten) und Datenbank-Backups
+uploads/**
+!uploads/.htaccess
+backups/*.sql
+backups/*.zip
+
+# Entwicklungswerkzeuge / Editor-/Tool-Metadaten
+.claude/
+synology-spk/
+*.md
+.DS_Store
+Thumbs.db
+*.log

@@ -24,13 +24,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['kategorie_id'])) {
     $jahr     = $_POST['jahr'] !== '' ? (int)$_POST['jahr'] : null;
     $freigabe = in_array($_POST['freigabe'] ?? '', ['verwaltung','mieter','hausmeister'], true)
                 ? $_POST['freigabe'] : 'verwaltung';
+    $erlaubteExtDok = ['pdf', 'jpg', 'jpeg', 'png', 'gif', 'webp', 'doc', 'docx', 'xls', 'xlsx', 'txt'];
+    $extDok = !empty($_FILES['datei']['name']) ? strtolower(pathinfo($_FILES['datei']['name'], PATHINFO_EXTENSION)) : null;
     if ($freigabe === 'mieter' && !$wohnId) {
         $errorMsg = 'Für die Sichtbarkeit „Mieter" bitte eine Wohnung zuordnen.';
+    } elseif ($extDok !== null && !in_array($extDok, $erlaubteExtDok, true)) {
+        $errorMsg = 'Dieser Dateityp wird nicht unterstützt.';
     } elseif (!empty($_FILES['datei']['name'])) {
-        $ext     = pathinfo($_FILES['datei']['name'], PATHINFO_EXTENSION);
         $zielDir = UPLOAD_DOKUMENTE . ($jahr ?? 'allgemein') . '/';
         if (!is_dir($zielDir)) mkdir($zielDir, 0777, true);
-        $dateiname = date('Ymd_His') . '_' . bin2hex(random_bytes(4)) . '_' . preg_replace('/[^a-zA-Z0-9._-]/','_',$_FILES['datei']['name']);
+        $dateiname = date('Ymd_His') . '_' . bin2hex(random_bytes(8)) . '.' . $extDok;
         move_uploaded_file($_FILES['datei']['tmp_name'], $zielDir . $dateiname);
         $stmt = $db->prepare("INSERT INTO dokumente (objekt_id,kategorie_id,wohnung_id,bezeichnung,dateiname,jahr,freigabe) VALUES (?,?,?,?,?,?,?)");
         $stmt->execute([$objektId, $katId, $wohnId, $bezeich, ($jahr ?? 'allgemein').'/'.$dateiname, $jahr, $freigabe]);
